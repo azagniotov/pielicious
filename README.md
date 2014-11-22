@@ -43,7 +43,7 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
 - `donut` (boolean): whether or not to render donut chart instead of pie chart. [default: `false`]
 - `donutFill` (string): fill color of the donut center [default: `#ffffff`]
 - `donutDiameter` (float): number between 0.1 - 0.9. Determines the donut thickness [default: `0.5`]
-- `growingOnLoad` (boolean): whether or not to animate pie rendering slice after slice. [default: `false`]
+- `growingOnLoad` (boolean): whether or not to animate rendering slice by slice. [default: `false`]
 - `sliceHoverEffect` (string): slice hover effect. [default: no hover effect]. Available options are: 
   - `shift`: pie slice shifts away from the pie center [see Screenshots](#screenshots)
   - `shift-bounce`: same as above. When mouse leaves the slice, the slice bounces back inside the pie
