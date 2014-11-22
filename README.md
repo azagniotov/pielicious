@@ -13,7 +13,7 @@ Paper.donutpiechart(cx, cy, r, opts)
  - cx (number) x coordinate of the pie
  - cy (number) y coordinate of the pie
  - r (integer) radius of the pie
- - opts (object) [pie options](#pie-ptions)
+ - opts (object) [pie options](#pie-options)
  
 ##### Method Return Value 
 JSON object of Raphaël elements: `{slices: [array], markers: [array], descriptions: [array]}`
@@ -30,14 +30,14 @@ JSON object of Raphaël elements: `{slices: [array], markers: [array], descripti
 - `legendLabels` (array): array of strings that will be used in a pie legend
 - `legendXstart` (integer): x coordinate of the legend
 - `legendYstart` (integer): y coordinate of the legend
-- `cursor` (string): the type of cursor that should be displayed when mouse hover the slice. [default `normal`]
+- `cursor` (string): cursor type displayed when mouse hovers the slice. [default `normal`]
 - `marker` (string): legend marker. Available options are `rect`, `circle` & `ellipse`. [default `circle`]
 - `fontFamily` (string): legend font type. [default `Arial`]
 - `fontSize` (string): legend font size. [default `14`]
 - `donut` (boolean): whether or not to render donut chart instead of pie chart. [default `false`]
 - `donutFill` (string): color of the donut center fill [default `#ffffff`]
 - `donutDiameter` (float): number between 0.1 - 0.9 [default `0.5`]
-- `growingOnLoad` (boolean): whether or not to render the pie slices one by one ('growing' effect). [default `false`]
+- `growingOnLoad` (boolean): whether or not to animate pie slice rendering one by one. [default `false`]
 - `sliceHoverEffect` (string): slice hover effect. [default no hover effect]. Available options are: 
   - `shift`: pie slice shifts away from the pie center
   - `shift-bounce`: same as above. When mouse leaves the slice, the slice bounces back to the pie
