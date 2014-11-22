@@ -1,7 +1,7 @@
 Raphaël Donut Pie Chart library
 =========
 
-Based on Raphaël JS by Dmitry Baranovskiy (http://raphaeljs.com)
+Based on Raphaël JS (cross-browser JavaScript library that draws scalable vector graphics) by Dmitry Baranovskiy (http://raphaeljs.com). 
 
 How to Use
 ==========
@@ -31,7 +31,7 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
 - `data` (array): values used to plot
 - `colors` (array): array of string colors used to plot each value pie slice
 - `hoverTitles` (array): array of strings representing tooltip texts when mouse hovers each pie slice
-- `sliceHandles` (array): array of strings assigned to each Raphaël element representing a pie slice
+- `sliceHandles` (array): array of strings assigned to each pie slice, legend marker & legend label 
 - `hrefs` (array): string urls to set up clicks on pie slices
 - `legendLabels` (array): array of strings that will be used in a pie legend
 - `legendXstart` (integer): x coordinate of the legend
