@@ -20,7 +20,13 @@ JSON object of Raphaël elements: `{slices: [array], markers: [array], descripti
 - `slices`: array of `Paper.path` representing pie slice
 - `markers`: array of `Paper.path` representing pie legend marker 
 - `descriptions`: array of `Paper.text` representing pie legend item
- 
+
+### Usage Example
+```
+var paper = new Raphael("canvas", 500, 500);
+var pie = paper.donutpiechart(cx, cy, r, opts);
+```
+
 ### Pie Options
 - `data` (array): values used to plot
 - `colors` (array): colors used to plot each value pie slice
@@ -44,13 +50,21 @@ JSON object of Raphaël elements: `{slices: [array], markers: [array], descripti
   - `scale`: pie slice scales up
   - `scale-bounce`: same as above. When mouse leaves the slice, the slice scales to normal size
   - `outline`: outline appears near the outer slice edge
- 
-### Usage Example
-```
-var paper = new Raphael("canvas", 500, 500);
-var pie = paper.donutpiechart(cx, cy, r, opts);
-```
 
+##### Screenshots
+![Pie](screenshots/pie.png?raw=true) Pie chart
+![Donut](screenshots/donut.png?raw=true) Donut chart
+![Growing](screenshots/growing.png?raw=true) Growing effect
+
+![Scale](screenshots/scale.png?raw=true) Scale effect
+![Shift](screenshots/shift.png?raw=true) Shift effect
+![Outline](screenshots/outline.png?raw=true) Outline effect
+  
+### Compatibility
+Raphaël v2.1.2
+
+### Dependencies
+Raphaël JS. There is no need for G Raphaël JS
 
 Changelog
 ---------
