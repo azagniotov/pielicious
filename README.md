@@ -52,13 +52,13 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
   - `outline`: outline appears near the outer slice edge [see Screenshots](#screenshots)
 
 ##### Screenshots
-![Pie](screenshots/pie.png?raw=true) Pie chart
-![Donut](screenshots/donut.png?raw=true) Donut chart
-![Growing](screenshots/growing.png?raw=true) Growing effect
+![Pie](screenshots/pie.png?raw=true) Pie
+![Donut](screenshots/donut.png?raw=true) Donut
+![Growing](screenshots/growing.png?raw=true) Growing
 
-![Scale](screenshots/scale.png?raw=true) Scale effect
-![Shift](screenshots/shift.png?raw=true) Shift effect
-![Outline](screenshots/outline.png?raw=true) Outline effect
+![Scale](screenshots/scale.png?raw=true) Scale
+![Shift](screenshots/shift.png?raw=true) Shift
+![Outline](screenshots/outline.png?raw=true) Outline
   
 ### Compatibility
 Raphaël v2.1.2
