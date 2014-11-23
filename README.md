@@ -58,10 +58,11 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
 ![Pie](screenshots/pie.png?raw=true) Pie
 ![Exploded Pie](screenshots/exploded-pie.png?raw=true) Pie
 ![Donut](screenshots/donut.png?raw=true) Donut
-![Exploded Donut](screenshots/exploded-donut.png?raw=true) Donut
 
+![Exploded Donut](screenshots/exploded-donut.png?raw=true) Donut
 ![Growing](screenshots/growing.png?raw=true) Growing
 ![Scale](screenshots/scale.png?raw=true) Scale
+
 ![Shift](screenshots/shift.png?raw=true) Shift
 ![Outline](screenshots/outline.png?raw=true) Outline
 ![Shadow](screenshots/shadow.png?raw=true) Shadow
