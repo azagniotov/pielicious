@@ -41,6 +41,7 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
 - `fontFamily` (string): legend font type. [default: `Arial`]
 - `fontSize` (string): legend font size. [default: `14`]
 - `donut` (boolean): whether or not to render donut chart instead of pie chart. [default: `false`]
+- `exploded` (boolean): whether or not to render the pie slices exploded. [default: `false`]
 - `donutFill` (string): fill color of the donut center [default: `#ffffff`]
 - `donutDiameter` (float): number between 0.1 - 0.9. Determines the donut thickness [default: `0.5`]
 - `growingOnLoad` (boolean): whether or not to animate rendering slice by slice. [default: `false`]
@@ -50,15 +51,20 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
   - `scale`: pie slice scales up
   - `scale-bounce`: same as above. When mouse leaves the slice, the slice bounces to normal size
   - `outline`: outline appears near the outer slice edge [see Screenshots](#screenshots)
+  - `outline-bounce`: same as above. When mouse leaves the slice, the outline bounces away
+  - `shadow`: pie slice gets shadow around its edges
 
 ##### Screenshots
 ![Pie](screenshots/pie.png?raw=true) Pie
+![Exploded Pie](screenshots/exploded-pie.png?raw=true) Pie
 ![Donut](screenshots/donut.png?raw=true) Donut
-![Growing](screenshots/growing.png?raw=true) Growing
+![Exploded Donut](screenshots/exploded-donut.png?raw=true) Donut
 
+![Growing](screenshots/growing.png?raw=true) Growing
 ![Scale](screenshots/scale.png?raw=true) Scale
 ![Shift](screenshots/shift.png?raw=true) Shift
 ![Outline](screenshots/outline.png?raw=true) Outline
+![Shadow](screenshots/shadow.png?raw=true) Shadow
   
 ### Compatibility
 Raphaël v2.1.2
