@@ -21,6 +21,8 @@
             legendLabelXstart = legendXstart + 38,
             legendLabelYstart = legendYstart,
             donut = opts.donut || false,
+            exploded = opts.exploded || false,
+            explodeDistance = 6,
             cursor = opts.cursor || "normal",
             marker = opts.marker || "circle",
             fontFamily = opts.fontFamily || "Arial",
@@ -103,6 +105,11 @@
                         "fill": color,
                         "title": title,
                         "cursor": cursor});
+            if (exploded) {
+                var shiftx = cx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
+                    shifty = cy + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
+                slice.animate({slice: [shiftx, shifty, r, startAngle, endAngle]});
+            }
             if (href !== "") {
                 var attrs = slice.attr();
                 attrs["href"] = href;
@@ -134,13 +141,18 @@
         function prepareForGrowingEffect(growingOnLoad, slice, startAngle, endAngle) {
             if (growingOnLoad) {
                 sliceData = [cx, cy, r, startAngle, endAngle];
-                var anim = Raphael.animation({slice: sliceData}, animationDelay);
+                if (exploded) {
+                    var shiftx = cx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
+                        shifty = cy + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
+                    sliceData = [shiftx, shifty, r, startAngle, endAngle];
+                }
+                var anim = Raphael.animation({slice: sliceData}, animationDelay, "backOut");
                 animations[slice.handle] = {slice: slice, animation: anim};
             }
         }
 
         function prepareForOutlineEffect(sliceHoverEffect, slice) {
-            if (sliceHoverEffect !== "" && sliceHoverEffect === "outline") {
+            if (sliceHoverEffect !== "" && sliceHoverEffect.indexOf("outline") !== -1) {
                 var outline = paper.path()
                     .attr({outline: sliceData,
                         "stroke": WHITE_COLOR,
@@ -157,52 +169,87 @@
                 return;
             }
 
-            var shiftx = cx + 6 * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
-                shifty = cy + 6 * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
+            var startx = cx, starty = cy, shiftDistance = 6;
+            if (exploded) {
+                startx = startx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
+                starty = starty + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
+                shiftDistance += explodeDistance;
+            }
+
+            var shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
+                shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
+
             if (sliceHoverEffect === "shift") {
                 slice.mouseover(function () {
                     slice.stop();
                     slice.animate({slice: [shiftx, shifty, r, startAngle, endAngle]});
-                })
+                });
 
                 slice.mouseout(function () {
-                    slice.animate({slice: [cx, cy, r, startAngle, endAngle]});
-                })
+                    slice.animate({slice: [startx, starty, r, startAngle, endAngle]});
+                });
             } else if (sliceHoverEffect === "shift-bounce") {
                 slice.mouseover(function () {
                     slice.stop();
                     slice.animate({slice: [shiftx, shifty, r, startAngle, endAngle]});
-                })
+                });
 
                 slice.mouseout(function () {
-                    slice.animate({slice: [cx, cy, r, startAngle, endAngle]}, animationDelay, "bounce");
-                })
+                    slice.animate({slice: [startx, starty, r, startAngle, endAngle]}, animationDelay, "bounce");
+                });
             } else if (sliceHoverEffect === "scale") {
                 slice.mouseover(function () {
                     slice.stop();
-                    slice.animate({transform: "s1.1 1.1 " + slice.cx + " " + slice.cy});
-                })
+                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});
+                });
 
                 slice.mouseout(function () {
-                    slice.animate({transform: "s1 1 " + slice.cx + " " + slice.cy});
-                })
+                    slice.animate({transform: "s1 1 " + startx + " " + starty});
+                });
             } else if (sliceHoverEffect === "scale-bounce") {
                 slice.mouseover(function () {
                     slice.stop();
-                    slice.animate({transform: "s1.1 1.1 " + slice.cx + " " + slice.cy});
-                })
+                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});
+                });
 
                 slice.mouseout(function () {
-                    slice.animate({transform: "s1 1 " + slice.cx + " " + slice.cy}, animationDelay, "bounce");
-                })
+                    slice.animate({transform: "s1 1 " + startx + " " + starty}, animationDelay, "bounce");
+                });
             } else if (sliceHoverEffect === "outline") {
                 slice.mouseover(function () {
                     slice.outline.show();
-                })
+                });
 
                 slice.mouseout(function () {
                     slice.outline.hide();
-                })
+                });
+            } else if (sliceHoverEffect === "outline-bounce") {
+                slice.mouseover(function () {
+                    slice.outline.show();
+                    slice.outline.animate({outline: [startx, starty, r + 5, startAngle, endAngle]});
+                });
+
+                slice.mouseout(function () {
+                    slice.outline.animate({outline: [startx, starty, r, startAngle, endAngle]}, animationDelay, "bounce", function() {
+                        slice.outline.hide();
+                    });
+                });
+            } else if (sliceHoverEffect === "shadow") {
+                slice.mouseover(function () {
+                    if ("undefined" == typeof slice.activeGlow || slice.activeGlow == null) {
+                        var glow = slice.glow({opacity: "0.4", width: "1"});
+                        slice.activeGlow = glow;
+                    }
+                    slice.activeGlow.show();
+                    slice.activeGlow.toFront();
+                    slice.toFront();
+                });
+
+                slice.mouseout(function () {
+                    if (slice.activeGlow != null) {
+                        slice.activeGlow.hide();
+                    }
+                });
             }
 
         }
