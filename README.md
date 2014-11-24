@@ -49,6 +49,7 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
 - `sliceHoverEffect` (string): slice hover effect. [default: no hover effect]. Available options are: 
   - `shift`: pie slice shifts away from the pie center [see Screenshots](#screenshots)
   - `shift-bounce`: same as above. When mouse leaves the slice, the slice bounces back inside the pie
+  - `shift-smooth`: same as `shift`. When mouse enters & leaves the slice, the slice moves in & out very smoothly
   - `scale`: pie slice scales up
   - `scale-bounce`: same as above. When mouse leaves the slice, the slice bounces to normal size
   - `outline`: outline appears near the outer slice edge [see Screenshots](#screenshots)

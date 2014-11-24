@@ -186,57 +186,72 @@
             if (sliceHoverEffect === "shift") {
                 slice.mouseover(function () {
                     slice.stop();
-                    slice.animate({slice: [shiftx, shifty, r, startAngle, endAngle]});
+                    slice.animate({slice: [shiftx, shifty, r, startAngle, endAngle]});        
                 });
 
                 slice.mouseout(function () {
                     slice.animate({slice: [startx, starty, r, startAngle, endAngle]});
+                    
                 });
             } else if (sliceHoverEffect === "shift-bounce") {
                 slice.mouseover(function () {
                     slice.stop();
-                    slice.animate({slice: [shiftx, shifty, r, startAngle, endAngle]});
+                    slice.animate({slice: [shiftx, shifty, r, startAngle, endAngle]});           
                 });
 
                 slice.mouseout(function () {
-                    slice.animate({slice: [startx, starty, r, startAngle, endAngle]}, animationDelay, "bounce");
+                    slice.animate({slice: [startx, starty, r, startAngle, endAngle]}, animationDelay, "bounce");                   
+                });
+            } else if (sliceHoverEffect === "shift-smooth") {
+                slice.mouseover(function () {
+                    slice.stop();
+                    var sliceAnimation = Raphael.animation({transform : "T" + (shiftx - cx)+ "," + (shifty - cy)}, 500);
+                    slice.animate(sliceAnimation);         
+                });
+
+                slice.mouseout(function () {
+                    var sliceAnimation = Raphael.animation({transform : "T" + 0 + "," + 0}, 500);
+                    slice.animate(sliceAnimation);
+                    
                 });
             } else if (sliceHoverEffect === "scale") {
                 slice.mouseover(function () {
                     slice.stop();
-                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});
+                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});                   
                 });
 
                 slice.mouseout(function () {
-                    slice.animate({transform: "s1 1 " + startx + " " + starty});
+                    slice.animate({transform: "s1 1 " + startx + " " + starty}, function() {
+                        slice.attr({fill: fill(color)});
+                    });                    
                 });
             } else if (sliceHoverEffect === "scale-bounce") {
                 slice.mouseover(function () {
                     slice.stop();
-                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});
+                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});                    
                 });
 
                 slice.mouseout(function () {
-                    slice.animate({transform: "s1 1 " + startx + " " + starty}, animationDelay, "bounce");
+                    slice.animate({transform: "s1 1 " + startx + " " + starty}, animationDelay, "bounce");                   
                 });
             } else if (sliceHoverEffect === "outline") {
                 slice.mouseover(function () {
-                    slice.outline.show();
+                    slice.outline.show();                    
                 });
 
                 slice.mouseout(function () {
-                    slice.outline.hide();
+                    slice.outline.hide();                    
                 });
             } else if (sliceHoverEffect === "outline-bounce") {
                 slice.mouseover(function () {
                     slice.outline.show();
-                    slice.outline.animate({outline: [startx, starty, r + 5, startAngle, endAngle]});
+                    slice.outline.animate({outline: [startx, starty, r + 5, startAngle, endAngle]});                 
                 });
 
                 slice.mouseout(function () {
                     slice.outline.animate({outline: [startx, starty, r, startAngle, endAngle]}, animationDelay, "bounce", function () {
                         slice.outline.hide();
-                    });
+                    });                 
                 });
             } else if (sliceHoverEffect === "shadow") {
                 slice.mouseover(function () {
@@ -250,12 +265,14 @@
                     if (donut && donutHole) {
                         donutHole.toFront();
                     }
+                    
                 });
 
                 slice.mouseout(function () {
                     if (slice.activeGlow != null) {
                         slice.activeGlow.hide();
                     }
+                    
                 });
             }
 
@@ -296,8 +313,8 @@
             if (!gradient) {
                 return color;
             } else {
-                var lighterShade = interpolate(0.35, color);
-                var darkerShade = interpolate(-0.08, color);
+                var lighterShade = interpolate(0.3, color);
+                var darkerShade = interpolate(-0.1, color);
                 return "90-" + darkerShade + "-" + lighterShade;
             }
         }
