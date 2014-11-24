@@ -195,7 +195,6 @@
 
                 slice.mouseout(function () {
                     slice.animate({slice: [startx, starty, R1, startAngle, endAngle]});
-                    
                 });
             } else if (sliceHoverEffect === "shift-bounce") {
                 slice.mouseover(function () {
@@ -216,7 +215,6 @@
                 slice.mouseout(function () {
                     var sliceAnimation = Raphael.animation({transform : "T" + 0 + "," + 0}, 500);
                     slice.animate(sliceAnimation);
-                    
                 });
             } else if (sliceHoverEffect === "scale") {
                 slice.mouseover(function () {
@@ -269,14 +267,12 @@
                     if (donut && donutHole) {
                         donutHole.toFront();
                     }
-                    
                 });
 
                 slice.mouseout(function () {
                     if (slice.activeGlow != null) {
                         slice.activeGlow.hide();
                     }
-                    
                 });
             }
 
