@@ -12,6 +12,7 @@
             WHITE_COLOR = "#ffffff",
             data = opts.data || [],
             colors = opts.colors || [],
+            gradient = opts.gradient || false,
             hoverTitles = opts.hoverTitles || [],
             sliceHandles = opts.sliceHandles || [],
             legendLabels = opts.legendLabels || [],
@@ -22,7 +23,7 @@
             legendLabelYstart = legendYstart,
             donut = opts.donut || false,
             exploded = opts.exploded || false,
-            explodeDistance = 6,
+            explodeDistance = 25,
             cursor = opts.cursor || "normal",
             marker = opts.marker || "circle",
             fontFamily = opts.fontFamily || "Arial",
@@ -61,7 +62,7 @@
         };
 
         paper.customAttributes.outline = function (cx, cy, r, startAngle, endAngle) {
-            var innerR = r + 1,
+            var innerR = r,
                 outerR = r + 10,
                 x1start = cx + innerR * Math.cos(startAngle * rad),
                 y1start = cy + innerR * Math.sin(startAngle * rad),
@@ -102,14 +103,9 @@
                         "stroke": WHITE_COLOR,
                         "stroke-width": 1.5,
                         "stroke-linejoin": "round",
-                        "fill": color,
+                        "fill": fill(color),
                         "title": title,
                         "cursor": cursor});
-            if (exploded) {
-                var shiftx = cx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
-                    shifty = cy + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
-                slice.animate({slice: [shiftx, shifty, r, startAngle, endAngle]});
-            }
             if (href !== "") {
                 var attrs = slice.attr();
                 attrs["href"] = href;
@@ -158,7 +154,7 @@
                         "stroke": WHITE_COLOR,
                         "stroke-width": 1.5,
                         "stroke-linejoin": "round",
-                        "fill": color});
+                        "fill": fill(color)});
                 slice.outline = outline;
                 outline.hide();
             }
@@ -169,10 +165,10 @@
                 return;
             }
 
-            var startx = cx, starty = cy, shiftDistance = 6;
+            var startx = cx, starty = cy, shiftDistance = 10;
             if (exploded) {
                 startx = startx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
-                starty = starty + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
+                    starty = starty + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
                 shiftDistance += explodeDistance;
             }
 
@@ -230,7 +226,7 @@
                 });
 
                 slice.mouseout(function () {
-                    slice.outline.animate({outline: [startx, starty, r, startAngle, endAngle]}, animationDelay, "bounce", function() {
+                    slice.outline.animate({outline: [startx, starty, r, startAngle, endAngle]}, animationDelay, "bounce", function () {
                         slice.outline.hide();
                     });
                 });
@@ -276,12 +272,36 @@
                 }
 
                 var text = paper.text(legendLabelXstart, legendLabelYstart, label);
-                text.attr({"font-family": fontFamily, "font-weight": "normal", "fill": "#474747", "cursor": cursor, "font-size": fontSize, "text-anchor": "start"});
+                text.attr({"title": label, "font-family": fontFamily, "font-weight": "normal", "fill": "#474747", "cursor": cursor, "font-size": fontSize, "text-anchor": "start"});
                 text.handle = sliceHandle;
                 descriptions.push(text);
 
                 legendYstart += 30;
                 legendLabelYstart = legendYstart;
+            }
+        }
+
+        function fill(color) {
+            if (!gradient) {
+                return color;
+            } else {
+                var lighterShade = interpolate(0.35, color);
+                var darkerShade = interpolate(-0.08, color);
+                return "90-" + darkerShade + "-" + lighterShade;
+            }
+        }
+
+        // http://stackoverflow.com/questions/5560248/programmatically-lighten-or-darken-a-hex-color-or-rgb-and-blend-colors
+        function interpolate(percentageOfDistance, c0, c1) {
+            // Higher positive percentage - the lighter the color wll be
+            // Higher negative percentage - the darker the color wll be
+            var n = percentageOfDistance < 0 ? percentageOfDistance * -1 : percentageOfDistance, round = Math.round, int = parseInt;
+            if (c0.length > 7) {
+                var rgb = c0.split(","), t = (c1 ? c1 : percentageOfDistance < 0 ? "rgb(0,0,0)" : "rgb(255,255,255)").split(","), R = int(rgb[0].slice(4)), G = int(rgb[1]), B = int(rgb[2]);
+                return "rgb(" + (round((int(t[0].slice(4)) - R) * n) + R) + "," + (round((int(t[1]) - G) * n) + G) + "," + (round((int(t[2]) - B) * n) + B) + ")"
+            } else {
+                var hex = int(c0.slice(1), 16), t = int((c1 ? c1 : percentageOfDistance < 0 ? "#000000" : "#FFFFFF").slice(1), 16), R1 = hex >> 16, G1 = hex >> 8 & 0x00FF, B1 = hex & 0x0000FF;
+                return "#" + (0x1000000 + (round(((t >> 16) - R1) * n) + R1) * 0x10000 + (round(((t >> 8 & 0x00FF) - G1) * n) + G1) * 0x100 + (round(((t & 0x0000FF) - B1) * n) + B1)).toString(16).slice(1)
             }
         }
 

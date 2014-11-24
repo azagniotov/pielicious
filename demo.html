@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Demo</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <script type="text/javascript" src="raphael-2.1.2.min.js"></script>
+    <script type="text/javascript" src="raphael.donutpiechart-1.0.js"></script>
+</head>
+<body>
+<div id="holder"></div>
+<script>
+    var KYUSHU_REGION = "Kyushu-Okinawa",
+        CHUGOKU_REGION = "Chugoku",
+        SHIKOKU_REGION = "Shikoku",
+        KANSAI_REGION = "Kansai/Kinki",
+        CHUBU_REGION = "Chubu",
+        KANTO_REGION = "Kanto",
+        TOHOKU_REGION = "Tohoku",
+        HOKKAIDO_REGION = "Hokkaido",
+        KYUSHU_REGION_COLOR = '#c2c2c2',
+        CHUGOKU_REGION_COLOR = '#efb179',
+        SHIKOKU_REGION_COLOR = '#d591f2',
+        KANSAI_REGION_COLOR = '#baa8f5',
+        CHUBU_REGION_COLOR = '#79efdb',
+        KANTO_REGION_COLOR = '#87ef79',
+        TOHOKU_REGION_COLOR = '#efe979',
+        HOKKAIDO_REGION_COLOR = '#ef7979';
+
+    var INDEX_TO_REGION_NAME = {
+        0: KYUSHU_REGION,
+        1: CHUGOKU_REGION,
+        2: SHIKOKU_REGION,
+        3: KANSAI_REGION,
+        4: CHUBU_REGION,
+        5: KANTO_REGION,
+        6: TOHOKU_REGION,
+        7: HOKKAIDO_REGION
+    };
+
+    var INDEX_TO_REGION_COLOR = {
+        0: KYUSHU_REGION_COLOR,
+        1: CHUGOKU_REGION_COLOR,
+        2: SHIKOKU_REGION_COLOR,
+        3: KANSAI_REGION_COLOR,
+        4: CHUBU_REGION_COLOR,
+        5: KANTO_REGION_COLOR,
+        6: TOHOKU_REGION_COLOR,
+        7: HOKKAIDO_REGION_COLOR
+    };
+    var INDEX_TO_REGION_VALUE = {
+        0: 35,
+        1: 118,
+        2: 29,
+        3: 228,
+        4: 253,
+        5: 51,
+        6: 242,
+        7: 19
+    };
+
+    var data = [];
+    var legendLabels = [];
+    var colors = [];
+    var hoverTitles = [];
+    var sliceHandles = [];
+    for (var index in INDEX_TO_REGION_NAME) {
+        var value = INDEX_TO_REGION_VALUE[index];
+        var name = INDEX_TO_REGION_NAME[index];
+        var color = INDEX_TO_REGION_COLOR[index];
+        data.push(value);
+        hoverTitles.push(name + " (" + value + ")");
+        colors.push(color);
+        sliceHandles.push(name);
+        legendLabels.push(name + " (" + value + ")");
+    }
+
+    var paper = new Raphael(document.getElementById("holder"), 500, 500);
+    var pie = paper.donutpiechart(150, 150, 80, {
+        data: data,
+        colors: colors,
+        gradient: true,
+        exploded: false,
+        hoverTitles: hoverTitles,
+        sliceHandles: sliceHandles,
+        legendLabels: legendLabels,
+        legendXstart: 285,
+        legendYstart: 55,
+        cursor: "pointer",
+        marker: "rect",
+        fontSize: "14",
+        donut: true,
+        donutFill: "#fff",
+        donutDiameter: 0.5,
+        growingOnLoad: true,
+        sliceHoverEffect: "outline"
+    });
+
+</script>
+</body>
+</html>
+
+
