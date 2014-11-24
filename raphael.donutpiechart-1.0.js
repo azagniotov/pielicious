@@ -6,13 +6,15 @@
  */
 
 (function () {
-    function DonutPieChart(paper, cx, cy, r, opts) {
+    function DonutPieChart(paper, cx, cy, R1, opts) {
         opts = opts || {};
         var rad = (Math.PI / 180),
             WHITE_COLOR = "#ffffff",
             data = opts.data || [],
             colors = opts.colors || [],
             gradient = opts.gradient || false,
+            tilt2d = opts.tilt2d || false,
+            R2 = tilt2d ? R1 / 2 : R1,
             hoverTitles = opts.hoverTitles || [],
             sliceHandles = opts.sliceHandles || [],
             legendLabels = opts.legendLabels || [],
@@ -46,42 +48,44 @@
         }
 
         paper.customAttributes.slice = function (cx, cy, r, startAngle, endAngle) {
-            var x1 = cx + r * Math.cos(startAngle * rad),
-                x2 = cx + r * Math.cos(endAngle * rad),
-                y1 = cy + r * Math.sin(startAngle * rad),
-                y2 = cy + r * Math.sin(endAngle * rad),
+            var x1 = cx + R1 * Math.cos(startAngle * rad),
+                x2 = cx + R1 * Math.cos(endAngle * rad),
+                y1 = cy + R2 * Math.sin(startAngle * rad),
+                y2 = cy + R2 * Math.sin(endAngle * rad),
                 flag = (Math.abs(endAngle - startAngle) > 180);
 
             return {
                 path: [
                     ["M", cx, cy, ],
                     ["L", x1, y1, ],
-                    ["A", r, r, 0, +flag, 1, x2, y2, ],
+                    ["A", R1, R2, 0, +flag, 1, x2, y2, ],
                     ["z"]
                 ]
             }
         };
 
-        paper.customAttributes.outline = function (cx, cy, r, startAngle, endAngle) {
-            var innerR = r,
-                outerR = r + 10,
-                x1start = cx + innerR * Math.cos(startAngle * rad),
-                y1start = cy + innerR * Math.sin(startAngle * rad),
-                x1end = cx + outerR * Math.cos(startAngle * rad),
-                y1end = cy + outerR * Math.sin(startAngle * rad),
-                x2start = cx + innerR * Math.cos((startAngle + (endAngle - startAngle)) * rad),
-                y2start = cy + innerR * Math.sin((startAngle + (endAngle - startAngle)) * rad),
-                x2end = cx + outerR * Math.cos((startAngle + (endAngle - startAngle)) * rad),
-                y2end = cy + outerR * Math.sin((startAngle + (endAngle - startAngle)) * rad),
+        paper.customAttributes.outline = function (cx, cy, R1, startAngle, endAngle) {
+            var innerR1 = R1,
+                innerR2 = (tilt2d ? R1 / 2 : R1),
+                outerR1 = innerR1 + 10,
+                outerR2 = innerR2 + (tilt2d ? 6 : 10),
+                x1start = cx + innerR1 * Math.cos(startAngle * rad),
+                y1start = cy + innerR2 * Math.sin(startAngle * rad),
+                x1end = cx + outerR1 * Math.cos(startAngle * rad),
+                y1end = cy + outerR2 * Math.sin(startAngle * rad),
+                x2start = cx + innerR1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
+                y2start = cy + innerR2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
+                x2end = cx + outerR1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
+                y2end = cy + outerR2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
                 flag = (Math.abs(endAngle - startAngle) > 180);
 
             return {
                 path: [
                     ["M", x1start, y1start, ],
                     ["L", x1end, y1end, ],
-                    ["A", outerR, outerR, 0, +flag, 1, x2end, y2end, ],
+                    ["A", outerR1, outerR2, 0, +flag, 1, x2end, y2end, ],
                     ["L", x2start, y2start, ],
-                    ["A", innerR, innerR, 0, +(flag), 0, x1start, y1start, ],
+                    ["A", innerR1, innerR2, 0, +(flag), 0, x1start, y1start, ],
                     ["z"]
                 ]
             }
@@ -98,7 +102,7 @@
                 endAngle = (_index === 0 ? 0 : endAngle),
                 startAngle = endAngle,
                 endAngle = startAngle + sliceAngle,
-                sliceData = (growingOnLoad === true ? [cx, cy, r, 0, 0] : [cx, cy, r, startAngle, endAngle]),
+                sliceData = (growingOnLoad === true ? [cx, cy, R1, 0, 0] : [cx, cy, R1, startAngle, endAngle]),
                 slice = paper.path()
                     .attr({slice: sliceData,
                         "stroke": WHITE_COLOR,
@@ -139,16 +143,16 @@
             if (donutDiameter > 0.9) {
                 donutDiameter = 0.9;
             }
-            donutHole = paper.circle(cx, cy, Math.ceil(r * donutDiameter)).attr({"stroke": "none", "fill": donutFill});
+            donutHole = paper.ellipse(cx, cy, Math.ceil(R1 * donutDiameter), Math.ceil(R2 * donutDiameter)).attr({"stroke": "none", "fill": donutFill});
         }
 
         function prepareForGrowingEffect(growingOnLoad, slice, startAngle, endAngle) {
             if (growingOnLoad) {
-                sliceData = [cx, cy, r, startAngle, endAngle];
+                sliceData = [cx, cy, R1, startAngle, endAngle];
                 if (exploded) {
                     var shiftx = cx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
                         shifty = cy + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
-                    sliceData = [shiftx, shifty, r, startAngle, endAngle];
+                    sliceData = [shiftx, shifty, R1, startAngle, endAngle];
                 }
                 var anim = Raphael.animation({slice: sliceData}, animationDelay, "backOut");
                 animations[slice.handle] = {slice: slice, animation: anim};
@@ -186,21 +190,21 @@
             if (sliceHoverEffect === "shift") {
                 slice.mouseover(function () {
                     slice.stop();
-                    slice.animate({slice: [shiftx, shifty, r, startAngle, endAngle]});        
+                    slice.animate({slice: [shiftx, shifty, R1, startAngle, endAngle]});
                 });
 
                 slice.mouseout(function () {
-                    slice.animate({slice: [startx, starty, r, startAngle, endAngle]});
+                    slice.animate({slice: [startx, starty, R1, startAngle, endAngle]});
                     
                 });
             } else if (sliceHoverEffect === "shift-bounce") {
                 slice.mouseover(function () {
                     slice.stop();
-                    slice.animate({slice: [shiftx, shifty, r, startAngle, endAngle]});           
+                    slice.animate({slice: [shiftx, shifty, R1, startAngle, endAngle]});
                 });
 
                 slice.mouseout(function () {
-                    slice.animate({slice: [startx, starty, r, startAngle, endAngle]}, animationDelay, "bounce");                   
+                    slice.animate({slice: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");   
                 });
             } else if (sliceHoverEffect === "shift-smooth") {
                 slice.mouseover(function () {
@@ -217,7 +221,7 @@
             } else if (sliceHoverEffect === "scale") {
                 slice.mouseover(function () {
                     slice.stop();
-                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});                   
+                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});
                 });
 
                 slice.mouseout(function () {
@@ -228,11 +232,11 @@
             } else if (sliceHoverEffect === "scale-bounce") {
                 slice.mouseover(function () {
                     slice.stop();
-                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});                    
+                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});
                 });
 
                 slice.mouseout(function () {
-                    slice.animate({transform: "s1 1 " + startx + " " + starty}, animationDelay, "bounce");                   
+                    slice.animate({transform: "s1 1 " + startx + " " + starty}, animationDelay, "bounce");
                 });
             } else if (sliceHoverEffect === "outline") {
                 slice.mouseover(function () {
@@ -245,11 +249,11 @@
             } else if (sliceHoverEffect === "outline-bounce") {
                 slice.mouseover(function () {
                     slice.outline.show();
-                    slice.outline.animate({outline: [startx, starty, r + 5, startAngle, endAngle]});                 
+                    slice.outline.animate({outline: [startx, starty, R1 + 5, startAngle, endAngle]});
                 });
 
                 slice.mouseout(function () {
-                    slice.outline.animate({outline: [startx, starty, r, startAngle, endAngle]}, animationDelay, "bounce", function () {
+                    slice.outline.animate({outline: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce", function () {
                         slice.outline.hide();
                     });                 
                 });
@@ -336,7 +340,7 @@
         return {slices: slices.items, markers: markers.items, descriptions: descriptions.items};
     };
 
-    Raphael.fn.donutpiechart = function (cx, cy, r, opts) {
-        return new DonutPieChart(this, cx, cy, r, opts);
+    Raphael.fn.donutpiechart = function (cx, cy, R, opts) {
+        return new DonutPieChart(this, cx, cy, R, opts);
     }
 })();

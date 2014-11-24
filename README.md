@@ -31,6 +31,7 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
 - `data` (array): values used to plot
 - `colors` (array): array of string colors used to plot each value pie slice
 - `gradient` (boolean): whether or not to fill pie slices by generating gradient from each `colors` [default: `false`]
+- `tilt2d` (boolean): whether or not to render pie/donut chart using tilted angle [default: `false`]
 - `hoverTitles` (array): array of strings representing tooltip texts when mouse hovers each pie slice
 - `sliceHandles` (array): array of strings assigned to each pie slice, legend marker & legend label 
 - `hrefs` (array): string urls to set up clicks on pie slices
