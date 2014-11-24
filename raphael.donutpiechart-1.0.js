@@ -19,8 +19,8 @@
             sliceHandles = opts.sliceHandles || [],
             legendLabels = opts.legendLabels || [],
             hrefs = opts.hrefs || [],
-            legendXstart = opts.legendXstart || cx + r + 30,
-            legendYstart = opts.legendYstart || cy - r,
+            legendXstart = opts.legendXstart || cx + R1 + 30,
+            legendYstart = opts.legendYstart || cy - R1,
             legendLabelXstart = legendXstart + 38,
             legendLabelYstart = legendYstart,
             donut = opts.donut || false,
@@ -47,7 +47,7 @@
             total += data[_index];
         }
 
-        paper.customAttributes.slice = function (cx, cy, r, startAngle, endAngle) {
+        paper.customAttributes.slice = function (cx, cy, R1, startAngle, endAngle) {
             var x1 = cx + R1 * Math.cos(startAngle * rad),
                 x2 = cx + R1 * Math.cos(endAngle * rad),
                 y1 = cy + R2 * Math.sin(startAngle * rad),
