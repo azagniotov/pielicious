@@ -38,6 +38,7 @@
             markers = paper.set(),
             descriptions = paper.set(),
             animations = {},
+            donutHole = null,
             _index;
 
         for (_index = 0; _index < data.length; _index++) {
@@ -132,6 +133,13 @@
                 }
                 clearTimeout(timeout);
             }, 200);
+        }
+
+        if (donut === true) {
+            if (donutDiameter > 0.9) {
+                donutDiameter = 0.9;
+            }
+            donutHole = paper.circle(cx, cy, Math.ceil(r * donutDiameter)).attr({"stroke": "none", "fill": donutFill});
         }
 
         function prepareForGrowingEffect(growingOnLoad, slice, startAngle, endAngle) {
@@ -239,6 +247,9 @@
                     slice.activeGlow.show();
                     slice.activeGlow.toFront();
                     slice.toFront();
+                    if (donut && donutHole) {
+                        donutHole.toFront();
+                    }
                 });
 
                 slice.mouseout(function () {
@@ -303,13 +314,6 @@
                 var hex = int(c0.slice(1), 16), t = int((c1 ? c1 : percentageOfDistance < 0 ? "#000000" : "#FFFFFF").slice(1), 16), R1 = hex >> 16, G1 = hex >> 8 & 0x00FF, B1 = hex & 0x0000FF;
                 return "#" + (0x1000000 + (round(((t >> 16) - R1) * n) + R1) * 0x10000 + (round(((t >> 8 & 0x00FF) - G1) * n) + G1) * 0x100 + (round(((t & 0x0000FF) - B1) * n) + B1)).toString(16).slice(1)
             }
-        }
-
-        if (donut === true) {
-            if (donutDiameter > 0.9) {
-                donutDiameter = 0.9;
-            }
-            paper.circle(cx, cy, Math.ceil(r * donutDiameter)).attr({"stroke": "none", "fill": donutFill});
         }
 
         return {slices: slices.items, markers: markers.items, descriptions: descriptions.items};
