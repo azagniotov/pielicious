@@ -78,7 +78,7 @@
     var pie = paper.donutpiechart(150, 150, 100, {
         data: data,
         colors: colors,
-        gradient: false,
+        gradient: true,
         tilt2d: true,
         exploded: false,
         hoverTitles: hoverTitles,
@@ -89,11 +89,11 @@
         cursor: "pointer",
         marker: "rect",
         fontSize: "14",
-        donut: true,
+        donut: false,
         donutFill: "#fff",
         donutDiameter: 0.5,
-        growingOnLoad: true,
-        sliceHoverEffect: "outline-bounce"
+        growingOnLoad: false,
+        sliceHoverEffect: "shift-bounce"
     });
 
 </script>

@@ -48,18 +48,46 @@
         }
 
         paper.customAttributes.slice = function (cx, cy, R1, startAngle, endAngle) {
-            var x1 = cx + R1 * Math.cos(startAngle * rad),
+            var R2 = tilt2d ? R1 / 2 : R1,
+                x1 = cx + R1 * Math.cos(startAngle * rad),
                 x2 = cx + R1 * Math.cos(endAngle * rad),
                 y1 = cy + R2 * Math.sin(startAngle * rad),
                 y2 = cy + R2 * Math.sin(endAngle * rad),
-                flag = (Math.abs(endAngle - startAngle) > 180);
+                largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
+                sweepFlag = 1; // positive angle
 
             return {
                 path: [
                     ["M", cx, cy, ],
                     ["L", x1, y1, ],
-                    ["A", R1, R2, 0, +flag, 1, x2, y2, ],
-                    ["z"]
+                    ["A", R1, R2, 0, +largeArcFlag, sweepFlag, x2, y2, ],
+                    ["Z"]
+                ]
+            }
+        };
+
+        paper.customAttributes.slice_border = function (cx, cy, R1, startAngle, endAngle) {
+            var R2 = R1 / 2,
+                x1start = cx + R1 * Math.cos(startAngle * rad),
+                y1start = cy + R2 * Math.sin(startAngle * rad),
+                x1end = cx + R1 * Math.cos(startAngle * rad),
+                y1end = (cy + 20) + R2 * Math.sin(startAngle * rad),
+                x2start = cx + R1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
+                y2start = cy + R2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
+                x2end = cx + R1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
+                y2end = (cy + 20) + R2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
+                largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
+                sweepFlagPositiveAngle = 1,
+                sweepFlagNegativeAngle = 0;
+
+            return {
+                path: [
+                    ["M", x1start, y1start, ],
+                    ["L", x1end, y1end, ],
+                    ["A", R1, R2, 0, +largeArcFlag, sweepFlagPositiveAngle, x2end, y2end, ],
+                    ["L", x2start, y2start, ],
+                    ["A", R1, R2, 0, +largeArcFlag, sweepFlagNegativeAngle, x1start, y1start, ],
+                    ["Z"]
                 ]
             }
         };
@@ -68,7 +96,7 @@
             var innerR1 = R1,
                 innerR2 = (tilt2d ? R1 / 2 : R1),
                 outerR1 = innerR1 + 10,
-                outerR2 = innerR2 + (tilt2d ? 6 : 10),
+                outerR2 = innerR2 + (tilt2d ? 5 : 10),
                 x1start = cx + innerR1 * Math.cos(startAngle * rad),
                 y1start = cy + innerR2 * Math.sin(startAngle * rad),
                 x1end = cx + outerR1 * Math.cos(startAngle * rad),
@@ -77,19 +105,48 @@
                 y2start = cy + innerR2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
                 x2end = cx + outerR1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
                 y2end = cy + outerR2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
-                flag = (Math.abs(endAngle - startAngle) > 180);
+                largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
+                sweepFlagPositiveAngle = 1,
+                sweepFlagNegativeAngle = 0;
 
             return {
                 path: [
                     ["M", x1start, y1start, ],
                     ["L", x1end, y1end, ],
-                    ["A", outerR1, outerR2, 0, +flag, 1, x2end, y2end, ],
+                    ["A", outerR1, outerR2, 0, +largeArcFlag, sweepFlagPositiveAngle, x2end, y2end, ],
                     ["L", x2start, y2start, ],
-                    ["A", innerR1, innerR2, 0, +(flag), 0, x1start, y1start, ],
-                    ["z"]
+                    ["A", innerR1, innerR2, 0, +largeArcFlag, sweepFlagNegativeAngle, x1start, y1start, ],
+                    ["Z"]
                 ]
             }
         };
+
+
+        var borders = {};
+        for (_index = 0; _index < data.length; _index++) {
+            var value = data[_index] || 0,
+                color = colors[_index] || "#FF0000",
+                title = hoverTitles[_index] || "",
+                href = hrefs[_index] || "",
+                sliceHandle = sliceHandles[_index] || "",
+                sliceAngle = 360 * value / total,
+                endAngle = (_index === 0 ? 0 : endAngle),
+                startAngle = endAngle,
+                endAngle = startAngle + sliceAngle,
+                sliceData = (growingOnLoad === true ? [cx, cy, R1, 0, 0] : [cx, cy, R1, startAngle, endAngle]);
+
+            var sliceBorder = paper.path()
+                .attr({
+                    "slice_border": sliceData,
+                    "stroke": WHITE_COLOR,
+                    "stroke-width": 1.5,
+                    "stroke-linejoin": "round",
+                    "fill": fill(color),
+                    "title": title,
+                    "cursor": cursor});
+
+            borders[startAngle + "-" + endAngle] = sliceBorder;
+        }
 
         for (_index = 0; _index < data.length; _index++) {
             var value = data[_index] || 0,
@@ -102,15 +159,18 @@
                 endAngle = (_index === 0 ? 0 : endAngle),
                 startAngle = endAngle,
                 endAngle = startAngle + sliceAngle,
-                sliceData = (growingOnLoad === true ? [cx, cy, R1, 0, 0] : [cx, cy, R1, startAngle, endAngle]),
-                slice = paper.path()
-                    .attr({slice: sliceData,
-                        "stroke": WHITE_COLOR,
-                        "stroke-width": 1.5,
-                        "stroke-linejoin": "round",
-                        "fill": fill(color),
-                        "title": title,
-                        "cursor": cursor});
+                sliceData = (growingOnLoad === true ? [cx, cy, R1, 0, 0] : [cx, cy, R1, startAngle, endAngle]);
+
+            var slice = paper.path()
+                .attr({
+                    "slice": sliceData,
+                    "stroke": WHITE_COLOR,
+                    "stroke-width": 1.5,
+                    "stroke-linejoin": "round",
+                    "fill": fill(color),
+                    "title": title,
+                    "cursor": cursor});
+
             if (href !== "") {
                 var attrs = slice.attr();
                 attrs["href"] = href;
@@ -184,6 +244,7 @@
                 shiftDistance += explodeDistance;
             }
 
+            var border = borders[startAngle + "-" + endAngle];
             var shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
                 shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
 
@@ -199,23 +260,55 @@
             } else if (sliceHoverEffect === "shift-bounce") {
                 slice.mouseover(function () {
                     slice.stop();
+                    border.stop();
                     slice.animate({slice: [shiftx, shifty, R1, startAngle, endAngle]});
+                    border.animate({slice_border: [shiftx, shifty, R1, startAngle, endAngle]});
                 });
 
                 slice.mouseout(function () {
-                    slice.animate({slice: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");   
+                    slice.animate({slice: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
+                    border.animate({slice_border: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
+                });
+
+                border.mouseover(function () {
+                    slice.stop();
+                    border.stop();
+                    slice.animate({slice: [shiftx, shifty, R1, startAngle, endAngle]});
+                    border.animate({slice_border: [shiftx, shifty, R1, startAngle, endAngle]});
+                });
+
+                border.mouseout(function () {
+                    slice.animate({slice: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
+                    border.animate({slice_border: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
                 });
             } else if (sliceHoverEffect === "shift-smooth") {
+                var shiftOut = Raphael.animation({transform : "T" + (shiftx - cx)+ "," + (shifty - cy)}, 500);
+                var shiftIn = Raphael.animation({transform : "T" + 0 + "," + 0}, 500);
+
                 slice.mouseover(function () {
                     slice.stop();
-                    var sliceAnimation = Raphael.animation({transform : "T" + (shiftx - cx)+ "," + (shifty - cy)}, 500);
-                    slice.animate(sliceAnimation);         
+                    border.stop();
+                    slice.animate(shiftOut);
+                    border.animate(shiftOut);
                 });
 
                 slice.mouseout(function () {
-                    var sliceAnimation = Raphael.animation({transform : "T" + 0 + "," + 0}, 500);
-                    slice.animate(sliceAnimation);
+                    slice.animate(shiftIn);
+                    border.animate(shiftIn);
                 });
+
+                border.mouseover(function () {
+                    slice.stop();
+                    border.stop();
+                    slice.animate(shiftOut);
+                    border.animate(shiftOut);
+                });
+
+                border.mouseout(function () {
+                    slice.animate(shiftIn);
+                    border.animate(shiftIn);
+                });
+
             } else if (sliceHoverEffect === "scale") {
                 slice.mouseover(function () {
                     slice.stop();
