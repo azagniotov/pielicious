@@ -13,7 +13,11 @@
             data = opts.data || [],
             colors = opts.colors || [],
             gradient = opts.gradient || false,
+
             tilt2d = opts.tilt2d || false,
+            size3d = opts.size3d || 25,
+
+
             R2 = tilt2d ? R1 / 2 : R1,
             hoverTitles = opts.hoverTitles || [],
             sliceHandles = opts.sliceHandles || [],
@@ -66,16 +70,33 @@
             }
         };
 
-        paper.customAttributes.slice_border = function (cx, cy, R1, startAngle, endAngle) {
+        paper.customAttributes.sliceInnerSideBorder = function (cx, cy, R1, angle /* startAngle | endAngle */) {
+            var R2 = tilt2d ? R1 / 2 : R1,
+                x = cx + R1 * Math.cos(angle * rad),
+                y = cy + R2 * Math.sin(angle * rad);
+
+            return {
+                path: [
+                    ["M", cx, cy, ],
+                    ["L", x, y, ],
+                    ["L", x, y + size3d, ],
+                    ["L", cx, cy + size3d, ],
+                    ["Z"]
+                ]
+            }
+        };
+
+
+        paper.customAttributes.sliceOuterRoundBorder = function (cx, cy, R1, startAngle, endAngle) {
             var R2 = R1 / 2,
                 x1start = cx + R1 * Math.cos(startAngle * rad),
                 y1start = cy + R2 * Math.sin(startAngle * rad),
                 x1end = cx + R1 * Math.cos(startAngle * rad),
-                y1end = (cy + 20) + R2 * Math.sin(startAngle * rad),
+                y1end = (cy + size3d) + R2 * Math.sin(startAngle * rad),
                 x2start = cx + R1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
                 y2start = cy + R2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
                 x2end = cx + R1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
-                y2end = (cy + 20) + R2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
+                y2end = (cy + size3d) + R2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
                 largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
                 sweepFlagPositiveAngle = 1,
                 sweepFlagNegativeAngle = 0;
@@ -121,8 +142,43 @@
             }
         };
 
-
         var borders = {};
+        var sides = {};
+        for (_index = 0; _index < data.length; _index++) {
+            var value = data[_index] || 0,
+                color = colors[_index] || "#FF0000",
+                title = hoverTitles[_index] || "",
+                href = hrefs[_index] || "",
+                sliceHandle = sliceHandles[_index] || "",
+                sliceAngle = 360 * value / total,
+                endAngle = (_index === 0 ? 0 : endAngle),
+                startAngle = endAngle,
+                endAngle = startAngle + sliceAngle;
+
+            var sliceInnerSideBorderOne = paper.path()
+                .attr({
+                    "sliceInnerSideBorder": (growingOnLoad === true ? [cx, cy, R1, 0] : [cx, cy, R1, startAngle]),
+                    "stroke": WHITE_COLOR,
+                    "stroke-width": 1.5,
+                    "stroke-linejoin": "round",
+                    "fill": fill(color),
+                    "title": title,
+                    "cursor": cursor});
+            sides[startAngle] = sliceInnerSideBorderOne;
+
+            var sliceInnerSideBorderTwo = paper.path()
+                .attr({
+                    "sliceInnerSideBorder": (growingOnLoad === true ? [cx, cy, R1, 0] : [cx, cy, R1, endAngle]),
+                    "stroke": WHITE_COLOR,
+                    "stroke-width": 1.5,
+                    "stroke-linejoin": "round",
+                    "fill": fill(color),
+                    "title": title,
+                    "cursor": cursor});
+            sides[endAngle] = sliceInnerSideBorderTwo;
+        }
+
+
         for (_index = 0; _index < data.length; _index++) {
             var value = data[_index] || 0,
                 color = colors[_index] || "#FF0000",
@@ -137,7 +193,7 @@
 
             var sliceBorder = paper.path()
                 .attr({
-                    "slice_border": sliceData,
+                    "sliceOuterRoundBorder": sliceData,
                     "stroke": WHITE_COLOR,
                     "stroke-width": 1.5,
                     "stroke-linejoin": "round",
@@ -237,14 +293,17 @@
                 return;
             }
 
-            var startx = cx, starty = cy, shiftDistance = 10;
+            var startx = cx, starty = cy, shiftDistance = 30;
             if (exploded) {
                 startx = startx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
                     starty = starty + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
                 shiftDistance += explodeDistance;
             }
 
+
             var border = borders[startAngle + "-" + endAngle];
+            var innerSideOne = sides[startAngle];
+            var innerSideTwo = sides[endAngle];
             var shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
                 shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
 
@@ -258,29 +317,36 @@
                     slice.animate({slice: [startx, starty, R1, startAngle, endAngle]});
                 });
             } else if (sliceHoverEffect === "shift-bounce") {
+                var sliceShiftOut = Raphael.animation({slice: [shiftx, shifty, R1, startAngle, endAngle]});
+                var sliceShiftIn = Raphael.animation({slice: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
+
+                var borderShiftOut = Raphael.animation({sliceOuterRoundBorder: [shiftx, shifty, R1, startAngle, endAngle]});
+                var borderShiftIn = Raphael.animation({sliceOuterRoundBorder: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
+
+                var innerSideOneShiftOut = Raphael.animation({sliceInnerSideBorder: [shiftx, shifty, R1, startAngle]});
+                var innerSideTwoShiftOut = Raphael.animation({sliceInnerSideBorder: [shiftx, shifty, R1, endAngle]});
+
+                var innerSideOneShiftIn = Raphael.animation({sliceInnerSideBorder: [startx, starty, R1, startAngle]}, animationDelay, "bounce");
+                var innerSideTwoShiftIn = Raphael.animation({sliceInnerSideBorder: [startx, starty, R1, endAngle]}, animationDelay, "bounce");
+
                 slice.mouseover(function () {
                     slice.stop();
                     border.stop();
-                    slice.animate({slice: [shiftx, shifty, R1, startAngle, endAngle]});
-                    border.animate({slice_border: [shiftx, shifty, R1, startAngle, endAngle]});
+                    innerSideOne.stop();
+                    innerSideTwo.stop();
+                    slice.animate(sliceShiftOut);
+                    border.animateWith(slice, sliceShiftOut, borderShiftOut);
+                    innerSideOne.animateWith(slice, sliceShiftOut, innerSideOneShiftOut);
+                    innerSideTwo.animateWith(slice, sliceShiftOut, innerSideTwoShiftOut);
                 });
 
                 slice.mouseout(function () {
-                    slice.animate({slice: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
-                    border.animate({slice_border: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
+                    slice.animate(sliceShiftIn);
+                    border.animateWith(slice, sliceShiftIn, borderShiftIn);
+                    innerSideOne.animateWith(slice, sliceShiftIn, innerSideOneShiftIn);
+                    innerSideTwo.animateWith(slice, sliceShiftIn, innerSideTwoShiftIn);
                 });
 
-                border.mouseover(function () {
-                    slice.stop();
-                    border.stop();
-                    slice.animate({slice: [shiftx, shifty, R1, startAngle, endAngle]});
-                    border.animate({slice_border: [shiftx, shifty, R1, startAngle, endAngle]});
-                });
-
-                border.mouseout(function () {
-                    slice.animate({slice: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
-                    border.animate({slice_border: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
-                });
             } else if (sliceHoverEffect === "shift-smooth") {
                 var shiftOut = Raphael.animation({transform : "T" + (shiftx - cx)+ "," + (shifty - cy)}, 500);
                 var shiftIn = Raphael.animation({transform : "T" + 0 + "," + 0}, 500);
@@ -289,24 +355,24 @@
                     slice.stop();
                     border.stop();
                     slice.animate(shiftOut);
-                    border.animate(shiftOut);
+                    border.animateWith(slice, shiftOut, shiftOut);
                 });
 
                 slice.mouseout(function () {
                     slice.animate(shiftIn);
-                    border.animate(shiftIn);
+                    border.animateWith(slice, shiftIn, shiftIn);
                 });
 
                 border.mouseover(function () {
                     slice.stop();
                     border.stop();
                     slice.animate(shiftOut);
-                    border.animate(shiftOut);
+                    border.animateWith(slice, shiftOut, shiftOut);
                 });
 
                 border.mouseout(function () {
                     slice.animate(shiftIn);
-                    border.animate(shiftIn);
+                    border.animateWith(slice, shiftIn, shiftIn);
                 });
 
             } else if (sliceHoverEffect === "scale") {
@@ -403,6 +469,11 @@
         }
 
         function fill(color) {
+            var rgb = Raphael.getRGB(color);
+            var hsl = toHsl(rgb.r, rgb.g, rgb.b);
+            var rgb2 = Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l);
+            console.log(rgb);
+            console.log(rgb2);
             if (!gradient) {
                 return color;
             } else {
@@ -410,6 +481,31 @@
                 var darkerShade = interpolate(-0.1, color);
                 return "90-" + darkerShade + "-" + lighterShade;
             }
+        }
+
+        function toHsl(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+
+            var max = Math.max(r, g, b),
+                min = Math.min(r, g, b),
+                h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0; // achromatic
+            } else {
+                var d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+
+            return {h: h, s: s, l: l};
         }
 
         // http://stackoverflow.com/questions/5560248/programmatically-lighten-or-darken-a-hex-color-or-rgb-and-blend-colors
