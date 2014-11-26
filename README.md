@@ -59,7 +59,7 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
 
 ##### Screenshots
 ![Pie](screenshots/pie.png?raw=true) Pie
-![Exploded Pie](screenshots/exploded-pie.png?raw=true) Exploded
+![3D Pie](screenshots/3d.png?raw=true) 3D Pie
 ![Donut](screenshots/donut.png?raw=true) Donut
 
 ![Gradient](screenshots/gradient.png?raw=true) Gradient

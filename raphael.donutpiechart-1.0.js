@@ -9,7 +9,6 @@
     function DonutPieChart(paper, cx, cy, R1, opts) {
         opts = opts || {};
         var rad = (Math.PI / 180),
-            R2 = make3d ? R1 / 2 : R1,
             WHITE_COLOR = "#ffffff",
             data = opts.data || [],
             colors = opts.colors || [],
@@ -18,6 +17,7 @@
             sliceHandles = opts.sliceHandles || [],
             hrefs = opts.hrefs || [],
             make3d = (opts.make3d && typeof opts.make3d === 'object') || false,
+            R2 = make3d ? R1 / 2 : R1,
             size3d = (make3d && opts.make3d.size ? opts.make3d.size : 25),
             donut = (opts.donut && typeof opts.donut === 'object') || false,
             donutFill = (donut && opts.donut.fill ? opts.donut.fill : WHITE_COLOR),
@@ -34,9 +34,9 @@
             marker = opts.marker || "circle",
             growingOnLoad = opts.growingOnLoad || false,
             sliceHoverEffect = opts.sliceHoverEffect || "",
-            shiftDistance = 25,
+            shiftDistance = 35,
             total = 0,
-            animationDelay = 500,
+            animationDelay = 600,
             slices = paper.set(),
             markers = paper.set(),
             descriptions = paper.set(),
@@ -91,6 +91,11 @@
         }
 
         paper.customAttributes.slice = function (startx, starty, R1, startAngle, endAngle) {
+
+            if (startAngle === 0 && endAngle === 0) {
+                return [];
+            }
+
             var R2 = make3d ? R1 / 2 : R1,
                 x1 = startx + R1 * Math.cos(startAngle * rad),
                 x2 = startx + R1 * Math.cos(endAngle * rad),
@@ -99,9 +104,6 @@
                 largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
                 sweepFlag = 1; // positive angle
 
-            if (startAngle === 0 && endAngle === 0) {
-                return [];
-            }
             return {
                 path: [
                     ["M", startx, starty, ],
@@ -113,6 +115,13 @@
         }
 
         paper.customAttributes.arc = function (startx, starty, R1, startAngle, endAngle) {
+
+            if (startAngle === 0 && endAngle === 0) {
+                return [];
+            } else if (startAngle < 180 && endAngle > 180) {
+                endAngle = 180;
+            }
+
             var R2 = make3d ? R1 / 2 : R1,
                 x1start = startx + R1 * Math.cos(startAngle * rad),
                 y1start = starty + R2 * Math.sin(startAngle * rad),
@@ -126,9 +135,6 @@
                 sweepFlagPositiveAngle = 1,
                 sweepFlagNegativeAngle = 0;
 
-            if (startAngle === 0 && endAngle === 0) {
-                return [];
-            }
             return {
                 path: [
                     ["M", x1start, y1start, ],
@@ -142,13 +148,14 @@
         }
 
         paper.customAttributes.wall = function (startx, starty, R1, angle) {
+            if (angle === 0) {
+                return [];
+            }
+
             var R2 = make3d ? R1 / 2 : R1,
                 x = startx + R1 * Math.cos(angle * rad),
                 y = starty + R2 * Math.sin(angle * rad);
 
-            if (angle === 0) {
-                return [];
-            }
             return {
                 path: [
                     ["M", startx, starty, ],
