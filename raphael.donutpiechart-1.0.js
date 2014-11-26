@@ -38,69 +38,105 @@
             donutDiameter = Math.abs(opts.donutDiameter) || 0.5,
             growingOnLoad = opts.growingOnLoad || false,
             sliceHoverEffect = opts.sliceHoverEffect || "",
+            shiftDistance = 30,
             total = 0,
             animationDelay = 500,
             slices = paper.set(),
             markers = paper.set(),
             descriptions = paper.set(),
-            animations = {},
+            pendingAnimations = {},
             donutHole = null,
-            _index;
+            _index,
+            points = [];
 
         for (_index = 0; _index < data.length; _index++) {
             total += data[_index];
         }
 
-        paper.customAttributes.slice = function (cx, cy, R1, startAngle, endAngle) {
+        for (_index = 0; _index < data.length; _index++) {
+            points[_index] = {};
+
+            var startx = cx, starty = cy,
+                value = data[_index] || 0,
+                color = colors[_index] || "#FF0000",
+                label = legendLabels[_index] || "",
+                title = hoverTitles[_index] || "",
+                href = hrefs[_index] || "",
+                sliceHandle = sliceHandles[_index] || "",
+                sliceAngle = 360 * value / total,
+                endAngle = (_index === 0 ? 0 : endAngle),
+                startAngle = endAngle,
+                endAngle = startAngle + sliceAngle;
+
+            if (exploded) {
+                startx = startx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
+                    starty = starty + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
+                shiftDistance += explodeDistance;
+            }
+
+            var shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
+                shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
+
+            points[_index].color = color;
+            points[_index].label = label;
+            points[_index].title = title;
+            points[_index].href = href;
+            points[_index].handle = sliceHandle;
+            points[_index].startAngle = startAngle;
+            points[_index].endAngle = endAngle;
+            points[_index].startx = startx;
+            points[_index].starty = starty;
+            points[_index].shiftx = shiftx;
+            points[_index].shifty = shifty;
+            points[_index].sliceOrigin = [startx, starty, R1, startAngle, endAngle];
+            points[_index].arcOrigin = points[_index].sliceOrigin;
+            points[_index].wallOneOrigin = [startx, starty, R1, startAngle];
+            points[_index].wallTwoOrigin = [startx, starty, R1, endAngle];
+            points[_index].sliceOriginZero = [startx, starty, R1, 0, 0];
+            points[_index].arcOriginZero = points[_index].sliceOriginZero;
+            points[_index].wallOneOriginZero = [startx, starty, R1, 0];
+            points[_index].wallTwoOriginZero = [startx, starty, R1, 0];
+        }
+
+        paper.customAttributes.slice = function (startx, starty, R1, startAngle, endAngle) {
             var R2 = tilt2d ? R1 / 2 : R1,
-                x1 = cx + R1 * Math.cos(startAngle * rad),
-                x2 = cx + R1 * Math.cos(endAngle * rad),
-                y1 = cy + R2 * Math.sin(startAngle * rad),
-                y2 = cy + R2 * Math.sin(endAngle * rad),
+                x1 = startx + R1 * Math.cos(startAngle * rad),
+                x2 = startx + R1 * Math.cos(endAngle * rad),
+                y1 = starty + R2 * Math.sin(startAngle * rad),
+                y2 = starty + R2 * Math.sin(endAngle * rad),
                 largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
                 sweepFlag = 1; // positive angle
 
+            if (startAngle === 0 && endAngle === 0) {
+                return [];
+            }
             return {
                 path: [
-                    ["M", cx, cy, ],
+                    ["M", startx, starty, ],
                     ["L", x1, y1, ],
                     ["A", R1, R2, 0, +largeArcFlag, sweepFlag, x2, y2, ],
                     ["Z"]
                 ]
-            }
-        };
+            };
+        }
 
-        paper.customAttributes.sliceInnerSideBorder = function (cx, cy, R1, angle /* startAngle | endAngle */) {
-            var R2 = tilt2d ? R1 / 2 : R1,
-                x = cx + R1 * Math.cos(angle * rad),
-                y = cy + R2 * Math.sin(angle * rad);
-
-            return {
-                path: [
-                    ["M", cx, cy, ],
-                    ["L", x, y, ],
-                    ["L", x, y + size3d, ],
-                    ["L", cx, cy + size3d, ],
-                    ["Z"]
-                ]
-            }
-        };
-
-
-        paper.customAttributes.sliceOuterRoundBorder = function (cx, cy, R1, startAngle, endAngle) {
+        paper.customAttributes.arc = function (startx, starty, R1, startAngle, endAngle) {
             var R2 = R1 / 2,
-                x1start = cx + R1 * Math.cos(startAngle * rad),
-                y1start = cy + R2 * Math.sin(startAngle * rad),
-                x1end = cx + R1 * Math.cos(startAngle * rad),
-                y1end = (cy + size3d) + R2 * Math.sin(startAngle * rad),
-                x2start = cx + R1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
-                y2start = cy + R2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
-                x2end = cx + R1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
-                y2end = (cy + size3d) + R2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
+                x1start = startx + R1 * Math.cos(startAngle * rad),
+                y1start = starty + R2 * Math.sin(startAngle * rad),
+                x1end = startx + R1 * Math.cos(startAngle * rad),
+                y1end = (starty + size3d) + R2 * Math.sin(startAngle * rad),
+                x2start = startx + R1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
+                y2start = starty + R2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
+                x2end = startx + R1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
+                y2end = (starty + size3d) + R2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
                 largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
                 sweepFlagPositiveAngle = 1,
                 sweepFlagNegativeAngle = 0;
 
+            if (startAngle === 0 && endAngle === 0) {
+                return [];
+            }
             return {
                 path: [
                     ["M", x1start, y1start, ],
@@ -110,145 +146,181 @@
                     ["A", R1, R2, 0, +largeArcFlag, sweepFlagNegativeAngle, x1start, y1start, ],
                     ["Z"]
                 ]
+            };
+        }
+
+        paper.customAttributes.wall = function (startx, starty, R1, angle) {
+            var R2 = tilt2d ? R1 / 2 : R1,
+                x = startx + R1 * Math.cos(angle * rad),
+                y = starty + R2 * Math.sin(angle * rad);
+
+            if (angle === 0) {
+                return [];
             }
-        };
-
-        paper.customAttributes.outline = function (cx, cy, R1, startAngle, endAngle) {
-            var innerR1 = R1,
-                innerR2 = (tilt2d ? R1 / 2 : R1),
-                outerR1 = innerR1 + 10,
-                outerR2 = innerR2 + (tilt2d ? 5 : 10),
-                x1start = cx + innerR1 * Math.cos(startAngle * rad),
-                y1start = cy + innerR2 * Math.sin(startAngle * rad),
-                x1end = cx + outerR1 * Math.cos(startAngle * rad),
-                y1end = cy + outerR2 * Math.sin(startAngle * rad),
-                x2start = cx + innerR1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
-                y2start = cy + innerR2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
-                x2end = cx + outerR1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
-                y2end = cy + outerR2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
-                largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
-                sweepFlagPositiveAngle = 1,
-                sweepFlagNegativeAngle = 0;
-
             return {
                 path: [
-                    ["M", x1start, y1start, ],
-                    ["L", x1end, y1end, ],
-                    ["A", outerR1, outerR2, 0, +largeArcFlag, sweepFlagPositiveAngle, x2end, y2end, ],
-                    ["L", x2start, y2start, ],
-                    ["A", innerR1, innerR2, 0, +largeArcFlag, sweepFlagNegativeAngle, x1start, y1start, ],
+                    ["M", startx, starty, ],
+                    ["L", startx, starty + size3d, ],
+                    ["L", x, y + size3d, ],
+                    ["L", x, y, ],
                     ["Z"]
                 ]
+            };
+        }
+
+        for (_index = 0; _index < data.length; _index++) {
+            var obj = points[_index];
+
+            points[_index].wallOne = paper.path().attr(attr("wall", obj, (growingOnLoad === true ? obj.wallOneOriginZero : obj.wallOneOrigin)));
+            points[_index].wallTwo = paper.path().attr(attr("wall", obj, (growingOnLoad === true ? obj.wallTwoOriginZero : obj.wallTwoOrigin)));
+            points[_index].arc = paper.path().attr(attr("arc", obj, (growingOnLoad === true ? obj.arcOriginZero : obj.arcOrigin)));
+            points[_index].slice = paper.path().attr(attr("slice", obj, (growingOnLoad === true ? obj.sliceOriginZero : obj.sliceOrigin)));
+
+            if (obj.endAngle >= 0 && obj.endAngle < 180) {
+                points[_index].wallOne.toFront();
+                points[_index].wallTwo.toFront();
+                points[_index].arc.toFront();
+                points[_index].slice.toFront();
+            } else {
+                if (obj.endAngle > 270 && obj.endAngle <= 360) {
+
+                    points[_index].wallTwo.toBack();
+                    points[_index].wallOne.toBack();
+                } else if (obj.endAngle >= 180 && obj.endAngle < 270) {
+                    points[_index].wallOne.toBack();
+                    points[_index].wallTwo.toBack();
+                }
+                points[_index].arc.toBack();
+                points[_index].slice.toFront();
             }
-        };
 
-        var borders = {};
-        var sides = {};
-        for (_index = 0; _index < data.length; _index++) {
-            var value = data[_index] || 0,
-                color = colors[_index] || "#FF0000",
-                title = hoverTitles[_index] || "",
-                href = hrefs[_index] || "",
-                sliceHandle = sliceHandles[_index] || "",
-                sliceAngle = 360 * value / total,
-                endAngle = (_index === 0 ? 0 : endAngle),
-                startAngle = endAngle,
-                endAngle = startAngle + sliceAngle;
-
-            var sliceInnerSideBorderOne = paper.path()
-                .attr({
-                    "sliceInnerSideBorder": (growingOnLoad === true ? [cx, cy, R1, 0] : [cx, cy, R1, startAngle]),
-                    "stroke": WHITE_COLOR,
-                    "stroke-width": 1.5,
-                    "stroke-linejoin": "round",
-                    "fill": fill(color),
-                    "title": title,
-                    "cursor": cursor});
-            sides[startAngle] = sliceInnerSideBorderOne;
-
-            var sliceInnerSideBorderTwo = paper.path()
-                .attr({
-                    "sliceInnerSideBorder": (growingOnLoad === true ? [cx, cy, R1, 0] : [cx, cy, R1, endAngle]),
-                    "stroke": WHITE_COLOR,
-                    "stroke-width": 1.5,
-                    "stroke-linejoin": "round",
-                    "fill": fill(color),
-                    "title": title,
-                    "cursor": cursor});
-            sides[endAngle] = sliceInnerSideBorderTwo;
+            bind(points[_index]);
+            buildSliceLegendlabel(points[_index].label, points[_index].color);
         }
 
-
-        for (_index = 0; _index < data.length; _index++) {
-            var value = data[_index] || 0,
-                color = colors[_index] || "#FF0000",
-                title = hoverTitles[_index] || "",
-                href = hrefs[_index] || "",
-                sliceHandle = sliceHandles[_index] || "",
-                sliceAngle = 360 * value / total,
-                endAngle = (_index === 0 ? 0 : endAngle),
-                startAngle = endAngle,
-                endAngle = startAngle + sliceAngle,
-                sliceData = (growingOnLoad === true ? [cx, cy, R1, 0, 0] : [cx, cy, R1, startAngle, endAngle]);
-
-            var sliceBorder = paper.path()
-                .attr({
-                    "sliceOuterRoundBorder": sliceData,
-                    "stroke": WHITE_COLOR,
-                    "stroke-width": 1.5,
-                    "stroke-linejoin": "round",
-                    "fill": fill(color),
-                    "title": title,
-                    "cursor": cursor});
-
-            borders[startAngle + "-" + endAngle] = sliceBorder;
+        function baseAttr(bucket) {
+            return {
+                "stroke": WHITE_COLOR,
+                "stroke-width": 1.5,
+                "stroke-linejoin": "round",
+                "fill": fill(bucket.color),
+                "title": bucket.title,
+                "cursor": cursor};
         }
 
-        for (_index = 0; _index < data.length; _index++) {
-            var value = data[_index] || 0,
-                color = colors[_index] || "#FF0000",
-                label = legendLabels[_index] || "",
-                title = hoverTitles[_index] || "",
-                href = hrefs[_index] || "",
-                sliceHandle = sliceHandles[_index] || "",
-                sliceAngle = 360 * value / total,
-                endAngle = (_index === 0 ? 0 : endAngle),
-                startAngle = endAngle,
-                endAngle = startAngle + sliceAngle,
-                sliceData = (growingOnLoad === true ? [cx, cy, R1, 0, 0] : [cx, cy, R1, startAngle, endAngle]);
+        function attr(shape, bucket, data) {
+            var attr = baseAttr(bucket);
 
-            var slice = paper.path()
-                .attr({
-                    "slice": sliceData,
-                    "stroke": WHITE_COLOR,
-                    "stroke-width": 1.5,
-                    "stroke-linejoin": "round",
-                    "fill": fill(color),
-                    "title": title,
-                    "cursor": cursor});
+            attr[shape] = data;
+            return attr;
+        }
 
-            if (href !== "") {
-                var attrs = slice.attr();
-                attrs["href"] = href;
-                slice.attr(attrs);
+        if (growingOnLoad) {
+            var timeout = setTimeout(function () {
+
+                for (_index = 0; _index < points.length; _index++) {
+                    points[_index].slice.animate({slice: points[_index].sliceOrigin}, animationDelay, "backOut");
+                    points[_index].arc.animate({arc: points[_index].arcOrigin}, animationDelay, "backOut");
+                    points[_index].wallOne.animate({wall: points[_index].wallOneOrigin}, animationDelay, "backOut");
+                    points[_index].wallTwo.animate({wall: points[_index].wallTwoOrigin}, animationDelay, "backOut");
+                }
+                clearTimeout(timeout);
+            }, 200);
+        }
+
+        function bind(point) {
+            if (sliceHoverEffect === "shift-bounce") {
+
+                var animationOutParams = [point.shiftx, point.shifty, R1, point.startAngle, point.endAngle];
+                var animationInParams = [point.startx, point.startx, R1, point.startAngle, point.endAngle];
+
+                var sliceShiftOut = Raphael.animation({slice: animationOutParams});
+                var sliceShiftIn = Raphael.animation({slice: animationInParams}, animationDelay, "bounce");
+
+                var slice = point.slice;
+                var arc = point.arc;
+                var wallOne = point.wallOne;
+                var wallTwo = point.wallTwo;
+
+                slice.mouseover(function () {
+                    slice.stop();
+                    slice.animate(sliceShiftOut);
+                    if (arc) {
+                        arc.stop();
+                        arc.animateWith(slice, sliceShiftOut, Raphael.animation({arc: animationOutParams}));
+                    }
+                    if (wallOne) {
+                        wallOne.stop();
+                        wallOne.animateWith(slice, sliceShiftOut, Raphael.animation({wall: [point.shiftx, point.shifty, R1, point.startAngle]}));
+                    }
+                    if (wallTwo) {
+                        wallTwo.stop();
+                        wallTwo.animateWith(slice, sliceShiftOut, Raphael.animation({wall: [point.shiftx, point.shifty, R1, point.endAngle]}));
+                    }
+                });
+
+                slice.mouseout(function () {
+                    slice.animate(sliceShiftIn);
+                    if (arc) {
+                        arc.animateWith(slice, sliceShiftIn, Raphael.animation({arc: animationInParams}, animationDelay, "bounce"));
+                    }
+                    if (wallOne) {
+                        wallOne.animateWith(slice, sliceShiftIn, Raphael.animation({wall: [point.startx, point.starty, R1, point.startAngle]}, animationDelay, "bounce"));
+                    }
+                    if (wallTwo) {
+                        wallTwo.animateWith(slice, sliceShiftIn, Raphael.animation({wall: [point.startx, point.starty, R1, point.endAngle]}, animationDelay, "bounce"));
+                    }
+                });
+
             }
-            slice.handle = sliceHandle;
-            slice.cx = cx;
-            slice.cy = cy;
-
-            buildSliceLegendlabel(label, color);
-            prepareForGrowingEffect(growingOnLoad, slice, startAngle, endAngle);
-            prepareForOutlineEffect(sliceHoverEffect, slice);
-            bindSliceEffect(sliceHoverEffect, slice, startAngle, endAngle);
-            slices.push(slice);
         }
+
+        /*
+         for (_index = 0; _index < 0; _index++) {
+         var value = data[_index] || 0,
+         color = colors[_index] || "#FF0000",
+         label = legendLabels[_index] || "",
+         title = hoverTitles[_index] || "",
+         href = hrefs[_index] || "",
+         sliceHandle = sliceHandles[_index] || "",
+         sliceAngle = 360 * value / total,
+         endAngle = (_index === 0 ? 0 : endAngle),
+         startAngle = endAngle,
+         endAngle = startAngle + sliceAngle,
+         sliceData = (growingOnLoad === true ? [cx, cy, R1, 0, 0] : [cx, cy, R1, startAngle, endAngle]);
+
+         var slice = paper.path()
+         .attr({
+         "slice": sliceData,
+         "stroke": WHITE_COLOR,
+         "stroke-width": 1.5,
+         "stroke-linejoin": "round",
+         "fill": fill(color),
+         "title": title,
+         "cursor": cursor});
+
+         if (href !== "") {
+         var attrs = slice.attr();
+         attrs["href"] = href;
+         slice.attr(attrs);
+         }
+         slice.handle = sliceHandle;
+         slice.cx = cx;
+         slice.cy = cy;
+
+         buildSliceLegendlabel(label, color);
+         prepareForGrowingEffect(growingOnLoad, slice, startAngle, endAngle);
+         prepareForOutlineEffect(sliceHoverEffect, slice);
+         bindSliceEffect(sliceHoverEffect, slice, startAngle, endAngle);
+         slices.push(slice);
+         }     */
 
         if (growingOnLoad) {
             var timeout = setTimeout(function () {
                 var handle;
                 var animation;
-                for (handle in animations) {
-                    animation = animations[handle];
+                for (handle in pendingAnimations) {
+                    animation = pendingAnimations[handle];
                     animation.slice.animate(animation.animation, animationDelay);
                 }
                 clearTimeout(timeout);
@@ -260,19 +332,6 @@
                 donutDiameter = 0.9;
             }
             donutHole = paper.ellipse(cx, cy, Math.ceil(R1 * donutDiameter), Math.ceil(R2 * donutDiameter)).attr({"stroke": "none", "fill": donutFill});
-        }
-
-        function prepareForGrowingEffect(growingOnLoad, slice, startAngle, endAngle) {
-            if (growingOnLoad) {
-                sliceData = [cx, cy, R1, startAngle, endAngle];
-                if (exploded) {
-                    var shiftx = cx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
-                        shifty = cy + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
-                    sliceData = [shiftx, shifty, R1, startAngle, endAngle];
-                }
-                var anim = Raphael.animation({slice: sliceData}, animationDelay, "backOut");
-                animations[slice.handle] = {slice: slice, animation: anim};
-            }
         }
 
         function prepareForOutlineEffect(sliceHoverEffect, slice) {
@@ -301,9 +360,6 @@
             }
 
 
-            var border = borders[startAngle + "-" + endAngle];
-            var innerSideOne = sides[startAngle];
-            var innerSideTwo = sides[endAngle];
             var shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
                 shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
 
@@ -331,48 +387,24 @@
 
                 slice.mouseover(function () {
                     slice.stop();
-                    border.stop();
-                    innerSideOne.stop();
-                    innerSideTwo.stop();
                     slice.animate(sliceShiftOut);
-                    border.animateWith(slice, sliceShiftOut, borderShiftOut);
-                    innerSideOne.animateWith(slice, sliceShiftOut, innerSideOneShiftOut);
-                    innerSideTwo.animateWith(slice, sliceShiftOut, innerSideTwoShiftOut);
                 });
 
                 slice.mouseout(function () {
                     slice.animate(sliceShiftIn);
-                    border.animateWith(slice, sliceShiftIn, borderShiftIn);
-                    innerSideOne.animateWith(slice, sliceShiftIn, innerSideOneShiftIn);
-                    innerSideTwo.animateWith(slice, sliceShiftIn, innerSideTwoShiftIn);
                 });
 
             } else if (sliceHoverEffect === "shift-smooth") {
-                var shiftOut = Raphael.animation({transform : "T" + (shiftx - cx)+ "," + (shifty - cy)}, 500);
-                var shiftIn = Raphael.animation({transform : "T" + 0 + "," + 0}, 500);
+                var shiftOut = Raphael.animation({transform: "T" + (shiftx - cx) + "," + (shifty - cy)}, 500);
+                var shiftIn = Raphael.animation({transform: "T" + 0 + "," + 0}, 500);
 
                 slice.mouseover(function () {
                     slice.stop();
-                    border.stop();
                     slice.animate(shiftOut);
-                    border.animateWith(slice, shiftOut, shiftOut);
                 });
 
                 slice.mouseout(function () {
                     slice.animate(shiftIn);
-                    border.animateWith(slice, shiftIn, shiftIn);
-                });
-
-                border.mouseover(function () {
-                    slice.stop();
-                    border.stop();
-                    slice.animate(shiftOut);
-                    border.animateWith(slice, shiftOut, shiftOut);
-                });
-
-                border.mouseout(function () {
-                    slice.animate(shiftIn);
-                    border.animateWith(slice, shiftIn, shiftIn);
                 });
 
             } else if (sliceHoverEffect === "scale") {
@@ -382,9 +414,9 @@
                 });
 
                 slice.mouseout(function () {
-                    slice.animate({transform: "s1 1 " + startx + " " + starty}, function() {
+                    slice.animate({transform: "s1 1 " + startx + " " + starty}, function () {
                         slice.attr({fill: fill(color)});
-                    });                    
+                    });
                 });
             } else if (sliceHoverEffect === "scale-bounce") {
                 slice.mouseover(function () {
@@ -397,11 +429,11 @@
                 });
             } else if (sliceHoverEffect === "outline") {
                 slice.mouseover(function () {
-                    slice.outline.show();                    
+                    slice.outline.show();
                 });
 
                 slice.mouseout(function () {
-                    slice.outline.hide();                    
+                    slice.outline.hide();
                 });
             } else if (sliceHoverEffect === "outline-bounce") {
                 slice.mouseover(function () {
@@ -412,7 +444,7 @@
                 slice.mouseout(function () {
                     slice.outline.animate({outline: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce", function () {
                         slice.outline.hide();
-                    });                 
+                    });
                 });
             } else if (sliceHoverEffect === "shadow") {
                 slice.mouseover(function () {
@@ -472,8 +504,6 @@
             var rgb = Raphael.getRGB(color);
             var hsl = toHsl(rgb.r, rgb.g, rgb.b);
             var rgb2 = Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l);
-            console.log(rgb);
-            console.log(rgb2);
             if (!gradient) {
                 return color;
             } else {
@@ -498,9 +528,15 @@
                 var d = max - min;
                 s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
                 switch (max) {
-                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                    case g: h = (b - r) / d + 2; break;
-                    case b: h = (r - g) / d + 4; break;
+                    case r:
+                        h = (g - b) / d + (g < b ? 6 : 0);
+                        break;
+                    case g:
+                        h = (b - r) / d + 2;
+                        break;
+                    case b:
+                        h = (r - g) / d + 4;
+                        break;
                 }
                 h /= 6;
             }
@@ -528,4 +564,5 @@
     Raphael.fn.donutpiechart = function (cx, cy, R, opts) {
         return new DonutPieChart(this, cx, cy, R, opts);
     }
-})();
+})
+    ();
