@@ -14,11 +14,11 @@
             colors = opts.colors || [],
             gradient = opts.gradient || false,
 
-            tilt2d = opts.tilt2d || false,
+            make3d = opts.make3d || false,
             size3d = opts.size3d || 25,
 
 
-            R2 = tilt2d ? R1 / 2 : R1,
+            R2 = make3d ? R1 / 2 : R1,
             hoverTitles = opts.hoverTitles || [],
             sliceHandles = opts.sliceHandles || [],
             legendLabels = opts.legendLabels || [],
@@ -29,7 +29,6 @@
             legendLabelYstart = legendYstart,
             donut = opts.donut || false,
             exploded = opts.exploded || false,
-            explodeDistance = 25,
             cursor = opts.cursor || "normal",
             marker = opts.marker || "circle",
             fontFamily = opts.fontFamily || "Arial",
@@ -38,13 +37,13 @@
             donutDiameter = Math.abs(opts.donutDiameter) || 0.5,
             growingOnLoad = opts.growingOnLoad || false,
             sliceHoverEffect = opts.sliceHoverEffect || "",
-            shiftDistance = 30,
+            shiftDistance = 25,
+            explodeDistance = 10,
             total = 0,
             animationDelay = 500,
             slices = paper.set(),
             markers = paper.set(),
             descriptions = paper.set(),
-            pendingAnimations = {},
             donutHole = null,
             _index,
             points = [];
@@ -70,7 +69,7 @@
 
             if (exploded) {
                 startx = startx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
-                    starty = starty + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
+                starty = starty + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
                 shiftDistance += explodeDistance;
             }
 
@@ -89,17 +88,20 @@
             points[_index].shiftx = shiftx;
             points[_index].shifty = shifty;
             points[_index].sliceOrigin = [startx, starty, R1, startAngle, endAngle];
-            points[_index].arcOrigin = points[_index].sliceOrigin;
-            points[_index].wallOneOrigin = [startx, starty, R1, startAngle];
-            points[_index].wallTwoOrigin = [startx, starty, R1, endAngle];
             points[_index].sliceOriginZero = [startx, starty, R1, 0, 0];
-            points[_index].arcOriginZero = points[_index].sliceOriginZero;
-            points[_index].wallOneOriginZero = [startx, starty, R1, 0];
-            points[_index].wallTwoOriginZero = [startx, starty, R1, 0];
+
+            if (make3d) {
+                points[_index].arcOrigin = points[_index].sliceOrigin;
+                points[_index].wallOneOrigin = [startx, starty, R1, startAngle];
+                points[_index].wallTwoOrigin = [startx, starty, R1, endAngle];
+                points[_index].arcOriginZero = points[_index].sliceOriginZero;
+                points[_index].wallOneOriginZero = [startx, starty, R1, 0];
+                points[_index].wallTwoOriginZero = [startx, starty, R1, 0];
+            }
         }
 
         paper.customAttributes.slice = function (startx, starty, R1, startAngle, endAngle) {
-            var R2 = tilt2d ? R1 / 2 : R1,
+            var R2 = make3d ? R1 / 2 : R1,
                 x1 = startx + R1 * Math.cos(startAngle * rad),
                 x2 = startx + R1 * Math.cos(endAngle * rad),
                 y1 = starty + R2 * Math.sin(startAngle * rad),
@@ -121,7 +123,7 @@
         }
 
         paper.customAttributes.arc = function (startx, starty, R1, startAngle, endAngle) {
-            var R2 = R1 / 2,
+            var R2 = make3d ? R1 / 2 : R1,
                 x1start = startx + R1 * Math.cos(startAngle * rad),
                 y1start = starty + R2 * Math.sin(startAngle * rad),
                 x1end = startx + R1 * Math.cos(startAngle * rad),
@@ -150,7 +152,7 @@
         }
 
         paper.customAttributes.wall = function (startx, starty, R1, angle) {
-            var R2 = tilt2d ? R1 / 2 : R1,
+            var R2 = make3d ? R1 / 2 : R1,
                 x = startx + R1 * Math.cos(angle * rad),
                 y = starty + R2 * Math.sin(angle * rad);
 
@@ -171,31 +173,38 @@
         for (_index = 0; _index < data.length; _index++) {
             var obj = points[_index];
 
-            points[_index].wallOne = paper.path().attr(attr("wall", obj, (growingOnLoad === true ? obj.wallOneOriginZero : obj.wallOneOrigin)));
-            points[_index].wallTwo = paper.path().attr(attr("wall", obj, (growingOnLoad === true ? obj.wallTwoOriginZero : obj.wallTwoOrigin)));
-            points[_index].arc = paper.path().attr(attr("arc", obj, (growingOnLoad === true ? obj.arcOriginZero : obj.arcOrigin)));
-            points[_index].slice = paper.path().attr(attr("slice", obj, (growingOnLoad === true ? obj.sliceOriginZero : obj.sliceOrigin)));
-
-            if (obj.endAngle >= 0 && obj.endAngle < 180) {
-                points[_index].wallOne.toFront();
-                points[_index].wallTwo.toFront();
-                points[_index].arc.toFront();
-                points[_index].slice.toFront();
-            } else {
-                if (obj.endAngle > 270 && obj.endAngle <= 360) {
-
-                    points[_index].wallTwo.toBack();
-                    points[_index].wallOne.toBack();
-                } else if (obj.endAngle >= 180 && obj.endAngle < 270) {
-                    points[_index].wallOne.toBack();
-                    points[_index].wallTwo.toBack();
-                }
-                points[_index].arc.toBack();
-                points[_index].slice.toFront();
+            if (make3d) {
+                points[_index].wallOne = paper.path().attr(attr("wall", obj, (growingOnLoad === true ? obj.wallOneOriginZero : obj.wallOneOrigin)));
+                points[_index].wallTwo = paper.path().attr(attr("wall", obj, (growingOnLoad === true ? obj.wallTwoOriginZero : obj.wallTwoOrigin)));
+                points[_index].arc = paper.path().attr(attr("arc", obj, (growingOnLoad === true ? obj.arcOriginZero : obj.arcOrigin)));
             }
+            points[_index].slice = paper.path().attr(attr("slice", obj, (growingOnLoad === true ? obj.sliceOriginZero : obj.sliceOrigin)));
+            slices.push(points[_index].slice);
 
             bind(points[_index]);
             buildSliceLegendlabel(points[_index].label, points[_index].color);
+        }
+
+        if (make3d) {
+            for (_index = 0; _index < data.length; _index++) {
+                var obj = points[_index];
+                if (obj.startAngle >= 90 && obj.startAngle < 270) {
+                    // order is important
+                    points[_index].wallOne.toBack();
+                    points[_index].wallTwo.toBack();
+                } else if (obj.endAngle > 270 && obj.endAngle <= 360) {
+                    points[_index].wallOne.toBack();
+                } else if (obj.endAngle > 0 && obj.endAngle < 90) {
+                    points[_index].wallTwo.toFront();
+                }
+
+                if (obj.startAngle >= 0 && obj.startAngle < 180 ) {
+                    points[_index].arc.toFront();
+                }  else {
+                    points[_index].arc.toBack();
+                }
+                points[_index].slice.toFront();
+            }
         }
 
         function baseAttr(bucket) {
@@ -220,28 +229,69 @@
 
                 for (_index = 0; _index < points.length; _index++) {
                     points[_index].slice.animate({slice: points[_index].sliceOrigin}, animationDelay, "backOut");
-                    points[_index].arc.animate({arc: points[_index].arcOrigin}, animationDelay, "backOut");
-                    points[_index].wallOne.animate({wall: points[_index].wallOneOrigin}, animationDelay, "backOut");
-                    points[_index].wallTwo.animate({wall: points[_index].wallTwoOrigin}, animationDelay, "backOut");
+
+                    if (make3d) {
+                        points[_index].arc.animate({arc: points[_index].arcOrigin}, animationDelay, "backOut");
+                        points[_index].wallOne.animate({wall: points[_index].wallOneOrigin}, animationDelay, "backOut");
+                        points[_index].wallTwo.animate({wall: points[_index].wallTwoOrigin}, animationDelay, "backOut");
+                    }
                 }
                 clearTimeout(timeout);
             }, 200);
         }
 
         function bind(point) {
-            if (sliceHoverEffect === "shift-bounce") {
 
-                var animationOutParams = [point.shiftx, point.shifty, R1, point.startAngle, point.endAngle];
-                var animationInParams = [point.startx, point.startx, R1, point.startAngle, point.endAngle];
+            var animationOutParams = [point.shiftx, point.shifty, R1, point.startAngle, point.endAngle];
+            var animationInParams = [point.startx, point.starty, R1, point.startAngle, point.endAngle];
 
-                var sliceShiftOut = Raphael.animation({slice: animationOutParams});
-                var sliceShiftIn = Raphael.animation({slice: animationInParams}, animationDelay, "bounce");
+            var sliceShiftOut = Raphael.animation({slice: animationOutParams});
+            var sliceShiftIn = Raphael.animation({slice: animationInParams}, animationDelay, "bounce");
 
-                var slice = point.slice;
-                var arc = point.arc;
-                var wallOne = point.wallOne;
-                var wallTwo = point.wallTwo;
+            var slice = point.slice;
+            var arc = point.arc;
+            var wallOne = point.wallOne;
+            var wallTwo = point.wallTwo;
 
+            if (sliceHoverEffect === "shift-smooth") {
+                var shiftOut = Raphael.animation({transform: "T" + (point.shiftx - cx) + "," + (point.shifty - cy)}, 500);
+                var shiftIn = Raphael.animation({transform: "T" + 0 + "," + 0}, 500);
+
+                slice.mouseover(function () {
+                    slice.stop();
+                    slice.animate(shiftOut);
+                    if (arc) {
+                        arc.stop();
+                        arc.animateWith(slice, shiftOut, shiftOut);
+                    }
+                    if (wallOne) {
+                        wallOne.stop();
+                        wallOne.animateWith(slice, shiftOut, shiftOut);
+                    }
+                    if (wallTwo) {
+                        wallTwo.stop();
+                        wallTwo.animateWith(slice, shiftOut, shiftOut);
+                    }
+                });
+
+                slice.mouseout(function () {
+                    slice.animate(shiftIn);
+                    if (arc) {
+                        arc.stop();
+                        arc.animateWith(slice, shiftIn, shiftIn);
+                    }
+                    if (wallOne) {
+                        wallOne.stop();
+                        wallOne.animateWith(slice, shiftIn, shiftIn);
+                    }
+                    if (wallTwo) {
+                        wallTwo.stop();
+                        wallTwo.animateWith(slice, shiftIn, shiftIn);
+                    }
+
+                });
+
+            } else if (sliceHoverEffect === "shift-bounce") {
                 slice.mouseover(function () {
                     slice.stop();
                     slice.animate(sliceShiftOut);
@@ -260,6 +310,7 @@
                 });
 
                 slice.mouseout(function () {
+                    slice.stop();
                     slice.animate(sliceShiftIn);
                     if (arc) {
                         arc.animateWith(slice, sliceShiftIn, Raphael.animation({arc: animationInParams}, animationDelay, "bounce"));
@@ -271,7 +322,6 @@
                         wallTwo.animateWith(slice, sliceShiftIn, Raphael.animation({wall: [point.startx, point.starty, R1, point.endAngle]}, animationDelay, "bounce"));
                     }
                 });
-
             }
         }
 
@@ -314,18 +364,6 @@
          bindSliceEffect(sliceHoverEffect, slice, startAngle, endAngle);
          slices.push(slice);
          }     */
-
-        if (growingOnLoad) {
-            var timeout = setTimeout(function () {
-                var handle;
-                var animation;
-                for (handle in pendingAnimations) {
-                    animation = pendingAnimations[handle];
-                    animation.slice.animate(animation.animation, animationDelay);
-                }
-                clearTimeout(timeout);
-            }, 200);
-        }
 
         if (donut === true) {
             if (donutDiameter > 0.9) {
