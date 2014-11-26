@@ -9,36 +9,32 @@
     function DonutPieChart(paper, cx, cy, R1, opts) {
         opts = opts || {};
         var rad = (Math.PI / 180),
+            R2 = make3d ? R1 / 2 : R1,
             WHITE_COLOR = "#ffffff",
             data = opts.data || [],
             colors = opts.colors || [],
             gradient = opts.gradient || false,
-
-            make3d = opts.make3d || false,
-            size3d = opts.size3d || 25,
-
-
-            R2 = make3d ? R1 / 2 : R1,
             hoverTitles = opts.hoverTitles || [],
             sliceHandles = opts.sliceHandles || [],
-            legendLabels = opts.legendLabels || [],
             hrefs = opts.hrefs || [],
-            legendXstart = opts.legendXstart || cx + R1 + 30,
-            legendYstart = opts.legendYstart || cy - R1,
+            make3d = (opts.make3d && typeof opts.make3d === 'object') || false,
+            size3d = (make3d && opts.make3d.size ? opts.make3d.size : 25),
+            donut = (opts.donut && typeof opts.donut === 'object') || false,
+            donutFill = (donut && opts.donut.fill ? opts.donut.fill : WHITE_COLOR),
+            donutDiameter = (donut && opts.donut.diameter ? Math.abs(opts.donut.diameter) : 0.5),
+            legend = (opts.legend && typeof opts.legend === 'object') || false,
+            legendLabels = (legend && opts.legend.labels ? opts.legend.labels : []),
+            legendXstart = (legend && opts.legend.x ? opts.legend.x : cx + R1 + 30),
+            legendYstart = (legend && opts.legend.y ? opts.legend.y : cy - R1),
             legendLabelXstart = legendXstart + 38,
             legendLabelYstart = legendYstart,
-            donut = opts.donut || false,
-            exploded = opts.exploded || false,
+            fontSize = (legend && opts.legend.fontSize ? opts.legend.fontSize : "14"),
+            fontFamily = (legend && opts.legend.fontFamily ? opts.legend.fontFamily : "Arial"),
             cursor = opts.cursor || "normal",
             marker = opts.marker || "circle",
-            fontFamily = opts.fontFamily || "Arial",
-            fontSize = opts.fontSize || "14",
-            donutFill = opts.donutFill || WHITE_COLOR,
-            donutDiameter = Math.abs(opts.donutDiameter) || 0.5,
             growingOnLoad = opts.growingOnLoad || false,
             sliceHoverEffect = opts.sliceHoverEffect || "",
             shiftDistance = 25,
-            explodeDistance = 10,
             total = 0,
             animationDelay = 500,
             slices = paper.set(),
@@ -66,12 +62,6 @@
                 endAngle = (_index === 0 ? 0 : endAngle),
                 startAngle = endAngle,
                 endAngle = startAngle + sliceAngle;
-
-            if (exploded) {
-                startx = startx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
-                starty = starty + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
-                shiftDistance += explodeDistance;
-            }
 
             var shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
                 shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
@@ -172,17 +162,17 @@
 
         for (_index = 0; _index < data.length; _index++) {
             var obj = points[_index];
-
+            var grow = growingOnLoad === true;
             if (make3d) {
-                points[_index].wallOne = paper.path().attr(attr("wall", obj, (growingOnLoad === true ? obj.wallOneOriginZero : obj.wallOneOrigin)));
-                points[_index].wallTwo = paper.path().attr(attr("wall", obj, (growingOnLoad === true ? obj.wallTwoOriginZero : obj.wallTwoOrigin)));
-                points[_index].arc = paper.path().attr(attr("arc", obj, (growingOnLoad === true ? obj.arcOriginZero : obj.arcOrigin)));
+                points[_index].wallOne = paper.path().attr(attr("wall", obj, (grow ? obj.wallOneOriginZero : obj.wallOneOrigin)));
+                points[_index].wallTwo = paper.path().attr(attr("wall", obj, (grow ? obj.wallTwoOriginZero : obj.wallTwoOrigin)));
+                points[_index].arc = paper.path().attr(attr("arc", obj, (grow ? obj.arcOriginZero : obj.arcOrigin)));
             }
-            points[_index].slice = paper.path().attr(attr("slice", obj, (growingOnLoad === true ? obj.sliceOriginZero : obj.sliceOrigin)));
+            points[_index].slice = paper.path().attr(attr("slice", obj, (grow ? obj.sliceOriginZero : obj.sliceOrigin)));
             slices.push(points[_index].slice);
 
-            bind(points[_index]);
-            buildSliceLegendlabel(points[_index].label, points[_index].color);
+            bindEffectHandlers(points[_index]);
+            renderChartLegend(points[_index].label, points[_index].color);
         }
 
         if (make3d) {
@@ -198,30 +188,26 @@
                     points[_index].wallTwo.toFront();
                 }
 
-                if (obj.startAngle >= 0 && obj.startAngle < 180 ) {
+                if (obj.startAngle >= 0 && obj.startAngle < 180) {
                     points[_index].arc.toFront();
-                }  else {
+                } else {
                     points[_index].arc.toBack();
                 }
                 points[_index].slice.toFront();
             }
         }
 
-        function baseAttr(bucket) {
-            return {
+        function attr(shape, bucket, data) {
+            var baseAttr = {
                 "stroke": WHITE_COLOR,
                 "stroke-width": 1.5,
                 "stroke-linejoin": "round",
                 "fill": fill(bucket.color),
                 "title": bucket.title,
                 "cursor": cursor};
-        }
+            baseAttr[shape] = data;
 
-        function attr(shape, bucket, data) {
-            var attr = baseAttr(bucket);
-
-            attr[shape] = data;
-            return attr;
+            return baseAttr;
         }
 
         if (growingOnLoad) {
@@ -240,8 +226,7 @@
             }, 200);
         }
 
-        function bind(point) {
-
+        function bindEffectHandlers(point) {
             var animationOutParams = [point.shiftx, point.shifty, R1, point.startAngle, point.endAngle];
             var animationInParams = [point.startx, point.starty, R1, point.startAngle, point.endAngle];
 
@@ -254,71 +239,50 @@
             var wallTwo = point.wallTwo;
 
             if (sliceHoverEffect === "shift-smooth") {
-                var shiftOut = Raphael.animation({transform: "T" + (point.shiftx - cx) + "," + (point.shifty - cy)}, 500);
-                var shiftIn = Raphael.animation({transform: "T" + 0 + "," + 0}, 500);
+                var shiftOut = Raphael.animation({transform: "T" + (point.shiftx - cx) + "," + (point.shifty - cy)}, animationDelay);
+                var shiftIn = Raphael.animation({transform: "T" + 0 + "," + 0}, animationDelay);
 
                 slice.mouseover(function () {
                     slice.stop();
                     slice.animate(shiftOut);
-                    if (arc) {
+                    if (make3d) {
                         arc.stop();
-                        arc.animateWith(slice, shiftOut, shiftOut);
-                    }
-                    if (wallOne) {
                         wallOne.stop();
-                        wallOne.animateWith(slice, shiftOut, shiftOut);
-                    }
-                    if (wallTwo) {
                         wallTwo.stop();
+                        arc.animateWith(slice, shiftOut, shiftOut);
+                        wallOne.animateWith(slice, shiftOut, shiftOut);
                         wallTwo.animateWith(slice, shiftOut, shiftOut);
                     }
                 });
 
                 slice.mouseout(function () {
                     slice.animate(shiftIn);
-                    if (arc) {
-                        arc.stop();
+                    if (make3d) {
                         arc.animateWith(slice, shiftIn, shiftIn);
-                    }
-                    if (wallOne) {
-                        wallOne.stop();
                         wallOne.animateWith(slice, shiftIn, shiftIn);
-                    }
-                    if (wallTwo) {
-                        wallTwo.stop();
                         wallTwo.animateWith(slice, shiftIn, shiftIn);
                     }
-
                 });
 
             } else if (sliceHoverEffect === "shift-bounce") {
                 slice.mouseover(function () {
                     slice.stop();
                     slice.animate(sliceShiftOut);
-                    if (arc) {
+                    if (make3d) {
                         arc.stop();
-                        arc.animateWith(slice, sliceShiftOut, Raphael.animation({arc: animationOutParams}));
-                    }
-                    if (wallOne) {
                         wallOne.stop();
-                        wallOne.animateWith(slice, sliceShiftOut, Raphael.animation({wall: [point.shiftx, point.shifty, R1, point.startAngle]}));
-                    }
-                    if (wallTwo) {
                         wallTwo.stop();
+                        arc.animateWith(slice, sliceShiftOut, Raphael.animation({arc: animationOutParams}));
+                        wallOne.animateWith(slice, sliceShiftOut, Raphael.animation({wall: [point.shiftx, point.shifty, R1, point.startAngle]}));
                         wallTwo.animateWith(slice, sliceShiftOut, Raphael.animation({wall: [point.shiftx, point.shifty, R1, point.endAngle]}));
                     }
                 });
 
                 slice.mouseout(function () {
-                    slice.stop();
                     slice.animate(sliceShiftIn);
-                    if (arc) {
+                    if (make3d) {
                         arc.animateWith(slice, sliceShiftIn, Raphael.animation({arc: animationInParams}, animationDelay, "bounce"));
-                    }
-                    if (wallOne) {
                         wallOne.animateWith(slice, sliceShiftIn, Raphael.animation({wall: [point.startx, point.starty, R1, point.startAngle]}, animationDelay, "bounce"));
-                    }
-                    if (wallTwo) {
                         wallTwo.animateWith(slice, sliceShiftIn, Raphael.animation({wall: [point.startx, point.starty, R1, point.endAngle]}, animationDelay, "bounce"));
                     }
                 });
@@ -326,46 +290,11 @@
         }
 
         /*
-         for (_index = 0; _index < 0; _index++) {
-         var value = data[_index] || 0,
-         color = colors[_index] || "#FF0000",
-         label = legendLabels[_index] || "",
-         title = hoverTitles[_index] || "",
-         href = hrefs[_index] || "",
-         sliceHandle = sliceHandles[_index] || "",
-         sliceAngle = 360 * value / total,
-         endAngle = (_index === 0 ? 0 : endAngle),
-         startAngle = endAngle,
-         endAngle = startAngle + sliceAngle,
-         sliceData = (growingOnLoad === true ? [cx, cy, R1, 0, 0] : [cx, cy, R1, startAngle, endAngle]);
-
-         var slice = paper.path()
-         .attr({
-         "slice": sliceData,
-         "stroke": WHITE_COLOR,
-         "stroke-width": 1.5,
-         "stroke-linejoin": "round",
-         "fill": fill(color),
-         "title": title,
-         "cursor": cursor});
-
-         if (href !== "") {
-         var attrs = slice.attr();
-         attrs["href"] = href;
-         slice.attr(attrs);
-         }
-         slice.handle = sliceHandle;
-         slice.cx = cx;
-         slice.cy = cy;
-
-         buildSliceLegendlabel(label, color);
-         prepareForGrowingEffect(growingOnLoad, slice, startAngle, endAngle);
          prepareForOutlineEffect(sliceHoverEffect, slice);
          bindSliceEffect(sliceHoverEffect, slice, startAngle, endAngle);
-         slices.push(slice);
          }     */
 
-        if (donut === true) {
+        if (donut && !make3d) {
             if (donutDiameter > 0.9) {
                 donutDiameter = 0.9;
             }
@@ -391,12 +320,6 @@
             }
 
             var startx = cx, starty = cy, shiftDistance = 30;
-            if (exploded) {
-                startx = startx + explodeDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
-                    starty = starty + explodeDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
-                shiftDistance += explodeDistance;
-            }
-
 
             var shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
                 shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
@@ -410,41 +333,6 @@
                 slice.mouseout(function () {
                     slice.animate({slice: [startx, starty, R1, startAngle, endAngle]});
                 });
-            } else if (sliceHoverEffect === "shift-bounce") {
-                var sliceShiftOut = Raphael.animation({slice: [shiftx, shifty, R1, startAngle, endAngle]});
-                var sliceShiftIn = Raphael.animation({slice: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
-
-                var borderShiftOut = Raphael.animation({sliceOuterRoundBorder: [shiftx, shifty, R1, startAngle, endAngle]});
-                var borderShiftIn = Raphael.animation({sliceOuterRoundBorder: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce");
-
-                var innerSideOneShiftOut = Raphael.animation({sliceInnerSideBorder: [shiftx, shifty, R1, startAngle]});
-                var innerSideTwoShiftOut = Raphael.animation({sliceInnerSideBorder: [shiftx, shifty, R1, endAngle]});
-
-                var innerSideOneShiftIn = Raphael.animation({sliceInnerSideBorder: [startx, starty, R1, startAngle]}, animationDelay, "bounce");
-                var innerSideTwoShiftIn = Raphael.animation({sliceInnerSideBorder: [startx, starty, R1, endAngle]}, animationDelay, "bounce");
-
-                slice.mouseover(function () {
-                    slice.stop();
-                    slice.animate(sliceShiftOut);
-                });
-
-                slice.mouseout(function () {
-                    slice.animate(sliceShiftIn);
-                });
-
-            } else if (sliceHoverEffect === "shift-smooth") {
-                var shiftOut = Raphael.animation({transform: "T" + (shiftx - cx) + "," + (shifty - cy)}, 500);
-                var shiftIn = Raphael.animation({transform: "T" + 0 + "," + 0}, 500);
-
-                slice.mouseover(function () {
-                    slice.stop();
-                    slice.animate(shiftOut);
-                });
-
-                slice.mouseout(function () {
-                    slice.animate(shiftIn);
-                });
-
             } else if (sliceHoverEffect === "scale") {
                 slice.mouseover(function () {
                     slice.stop();
@@ -507,7 +395,7 @@
 
         }
 
-        function buildSliceLegendlabel(label, color) {
+        function renderChartLegend(label, color) {
             if (label !== "") {
                 legendLabelYstart += 10;
                 var radius = 9;
@@ -539,24 +427,35 @@
         }
 
         function fill(color) {
-            var rgb = Raphael.getRGB(color);
-            var hsl = toHsl(rgb.r, rgb.g, rgb.b);
-            var rgb2 = Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l);
             if (!gradient) {
                 return color;
             } else {
-                var lighterShade = interpolate(0.3, color);
-                var darkerShade = interpolate(-0.1, color);
-                return "90-" + darkerShade + "-" + lighterShade;
+                return PieColor(color, 90).gradient(20, 14);
             }
         }
 
-        function toHsl(r, g, b) {
-            r /= 255;
-            g /= 255;
-            b /= 255;
+        return {slices: slices.items, markers: markers.items, descriptions: descriptions.items};
+    };
 
-            var max = Math.max(r, g, b),
+    var PieColor = function PieColor(color, gradientAngle) {
+        if (color instanceof PieColor) {
+            return color;
+        }
+
+        if (!(this instanceof PieColor)) {
+            return new PieColor(color, gradientAngle);
+        }
+        this._originalColor = color,
+            this._gradientAngle = gradientAngle;
+        this._rgb = Raphael.getRGB(color);
+    };
+
+    PieColor.prototype = {
+        toHsl: function () {
+            var r = this._rgb.r / 255,
+                g = this._rgb.g / 255,
+                b = this._rgb.b / 255,
+                max = Math.max(r, g, b),
                 min = Math.min(r, g, b),
                 h, s, l = (max + min) / 2;
 
@@ -578,29 +477,33 @@
                 }
                 h /= 6;
             }
-
             return {h: h, s: s, l: l};
-        }
+        },
 
-        // http://stackoverflow.com/questions/5560248/programmatically-lighten-or-darken-a-hex-color-or-rgb-and-blend-colors
-        function interpolate(percentageOfDistance, c0, c1) {
-            // Higher positive percentage - the lighter the color wll be
-            // Higher negative percentage - the darker the color wll be
-            var n = percentageOfDistance < 0 ? percentageOfDistance * -1 : percentageOfDistance, round = Math.round, int = parseInt;
-            if (c0.length > 7) {
-                var rgb = c0.split(","), t = (c1 ? c1 : percentageOfDistance < 0 ? "rgb(0,0,0)" : "rgb(255,255,255)").split(","), R = int(rgb[0].slice(4)), G = int(rgb[1]), B = int(rgb[2]);
-                return "rgb(" + (round((int(t[0].slice(4)) - R) * n) + R) + "," + (round((int(t[1]) - G) * n) + G) + "," + (round((int(t[2]) - B) * n) + B) + ")"
-            } else {
-                var hex = int(c0.slice(1), 16), t = int((c1 ? c1 : percentageOfDistance < 0 ? "#000000" : "#FFFFFF").slice(1), 16), R1 = hex >> 16, G1 = hex >> 8 & 0x00FF, B1 = hex & 0x0000FF;
-                return "#" + (0x1000000 + (round(((t >> 16) - R1) * n) + R1) * 0x10000 + (round(((t >> 8 & 0x00FF) - G1) * n) + G1) * 0x100 + (round(((t & 0x0000FF) - B1) * n) + B1)).toString(16).slice(1)
-            }
-        }
+        lighten: function (amount) {
+            amount = (amount === 0 || amount < 0) ? 0 : (amount || 10);
+            var hsl = this.toHsl();
+            hsl.l += amount / 100;
+            hsl.l = Math.min(1, Math.max(0, hsl.l));
 
-        return {slices: slices.items, markers: markers.items, descriptions: descriptions.items};
-    };
+            return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l)
+        },
+
+        darken: function (amount) {
+            amount = (amount === 0 || amount < 0) ? 0 : (amount || 10);
+            var hsl = this.toHsl();
+            hsl.l -= amount / 100;
+            hsl.l = Math.min(1, Math.max(0, hsl.l));
+
+            return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l)
+        },
+
+        gradient: function (darkAmount, lightAmount) {
+            return this._gradientAngle + "-" + this.darken(darkAmount) + "-" + this.lighten(lightAmount);
+        }
+    }
 
     Raphael.fn.donutpiechart = function (cx, cy, R, opts) {
         return new DonutPieChart(this, cx, cy, R, opts);
     }
-})
-    ();
+})();

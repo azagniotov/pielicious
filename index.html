@@ -10,21 +10,21 @@
 <div id="holder"></div>
 <script>
     var KYUSHU_REGION = "Kyushu-Okinawa",
-        CHUGOKU_REGION = "Chugoku",
-        SHIKOKU_REGION = "Shikoku",
-        KANSAI_REGION = "Kansai/Kinki",
-        CHUBU_REGION = "Chubu",
-        KANTO_REGION = "Kanto",
-        TOHOKU_REGION = "Tohoku",
-        HOKKAIDO_REGION = "Hokkaido",
-        KYUSHU_REGION_COLOR = '#c2c2c2',
-        CHUGOKU_REGION_COLOR = '#efb179',
-        SHIKOKU_REGION_COLOR = '#d591f2',
-        KANSAI_REGION_COLOR = '#baa8f5',
-        CHUBU_REGION_COLOR = '#79efdb',
-        KANTO_REGION_COLOR = '#87ef79',
-        TOHOKU_REGION_COLOR = '#efe979',
-        HOKKAIDO_REGION_COLOR = '#ef7979';
+            CHUGOKU_REGION = "Chugoku",
+            SHIKOKU_REGION = "Shikoku",
+            KANSAI_REGION = "Kansai/Kinki",
+            CHUBU_REGION = "Chubu",
+            KANTO_REGION = "Kanto",
+            TOHOKU_REGION = "Tohoku",
+            HOKKAIDO_REGION = "Hokkaido",
+            KYUSHU_REGION_COLOR = '#c2c2c2',
+            CHUGOKU_REGION_COLOR = '#efb179',
+            SHIKOKU_REGION_COLOR = '#d591f2',
+            KANSAI_REGION_COLOR = '#baa8f5',
+            CHUBU_REGION_COLOR = '#79efdb',
+            KANTO_REGION_COLOR = '#87ef79',
+            TOHOKU_REGION_COLOR = '#efe979',
+            HOKKAIDO_REGION_COLOR = '#ef7979';
 
     var INDEX_TO_REGION_NAME = {
         0: KYUSHU_REGION,
@@ -78,23 +78,16 @@
     var pie = paper.donutpiechart(150, 150, 100, {
         data: data,
         colors: colors,
-        gradient: true,
-        make3d: true,
-        size3d: 30,
-        exploded: false,
         hoverTitles: hoverTitles,
         sliceHandles: sliceHandles,
-        legendLabels: legendLabels,
-        legendXstart: 285,
-        legendYstart: 55,
+        gradient: true,
         cursor: "pointer",
         marker: "rect",
-        fontSize: "14",
-        donut: false,
-        donutFill: "#fff",
-        donutDiameter: 0.5,
+        make3d: {size: 30},
+        donut: {fill: "#fff", diameter: 0.5},
+        legend: {labels: legendLabels, x: 290, y: 90, fontSize: 14, fontFamily: "Verdana"},
         growingOnLoad: true,
-        sliceHoverEffect: "shift-smooth"
+        sliceHoverEffect: "shift-bounce"
     });
 
 </script>
