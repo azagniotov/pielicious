@@ -3,7 +3,7 @@
  * unless dev tools are open, and IE doesn't define console.debug
  * http://stackoverflow.com/questions/3326650/console-is-undefined-error-for-internet-explorer
  */
-(function() {
+(function () {
     if (!window.console) {
         window.console = {};
     }
@@ -16,7 +16,8 @@
     // define undefined methods as noops to prevent errors
     for (var i = 0; i < m.length; i++) {
         if (!window.console[m[i]]) {
-            window.console[m[i]] = function() {};
+            window.console[m[i]] = function () {
+            };
         }
     }
 })();
@@ -32,6 +33,7 @@
         opts = opts || {};
         var rad = (Math.PI / 180),
             WHITE_COLOR = "#ffffff",
+            BOUNCE_EFFECT_NAME = "bounce",
             data = opts.data || [],
             colors = opts.colors || [],
             gradient = opts.gradient || false,
@@ -62,7 +64,6 @@
             slices = paper.set(),
             markers = paper.set(),
             descriptions = paper.set(),
-            donutHole = null,
             _index,
             bucket = [];
 
@@ -169,6 +170,33 @@
             };
         }
 
+        paper.customAttributes.outline = function (startx, starty, R1, startAngle, endAngle) {
+            var innerR1 = R1 + (make3d ? 3 : 1),
+                innerR2 = (make3d ? innerR1 / 2 : innerR1),
+                outerR1 = innerR1 + (make3d ? 14 : 10),
+                outerR2 = innerR2 + (make3d ? 6 : 10),
+                x1start = cx + innerR1 * Math.cos(startAngle * rad),
+                y1start = cy + innerR2 * Math.sin(startAngle * rad),
+                x1end = cx + outerR1 * Math.cos(startAngle * rad),
+                y1end = cy + outerR2 * Math.sin(startAngle * rad),
+                x2start = cx + innerR1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
+                y2start = cy + innerR2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
+                x2end = cx + outerR1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
+                y2end = cy + outerR2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
+                flag = (Math.abs(endAngle - startAngle) > 180);
+
+            return {
+                path: [
+                    ["M", x1start, y1start ],
+                    ["L", x1end, y1end ],
+                    ["A", outerR1, outerR2, 0, +flag, 1, x2end, y2end ],
+                    ["L", x2start, y2start ],
+                    ["A", innerR1, innerR2, 0, +(flag), 0, x1start, y1start ],
+                    ["Z"]
+                ]
+            }
+        };
+
         paper.customAttributes.wall = function (startx, starty, R1, angle) {
             if (angle === 0) {
                 return [];
@@ -199,6 +227,11 @@
             }
             bucket[_index].slice = paper.path().attr(attr("slice", obj, (grow ? obj.sliceOriginZero : obj.sliceOrigin)));
             bucket[_index].slice.handle = bucket[_index].handle;
+            if (sliceHoverEffect.indexOf("outline") !== -1) {
+                var outline = paper.path().attr(attr("outline", obj, bucket[_index].sliceOrigin));
+                bucket[_index].slice.outline = outline;
+                outline.hide();
+            }
             slices.push(bucket[_index].slice);
 
             bindEffectHandlers(bucket[_index]);
@@ -298,16 +331,16 @@
             } else if (sliceHoverEffect === "shift-bounce") {
                 Animator(bucket, make3d,
                     Raphael.animation({slice: shiftOutCoordinates}, shortAnimationDelay),
-                    Raphael.animation({slice: startCoordinates}, animationDelay, "bounce"),
+                    Raphael.animation({slice: startCoordinates}, animationDelay, BOUNCE_EFFECT_NAME),
                     {
                         arc: Raphael.animation({arc: shiftOutCoordinates}, shortAnimationDelay),
                         wallOne: Raphael.animation({wall: [bucket.shiftx, bucket.shifty, R1, bucket.startAngle]}, shortAnimationDelay),
                         wallTwo: Raphael.animation({wall: [bucket.shiftx, bucket.shifty, R1, bucket.endAngle]}, shortAnimationDelay)
                     },
                     {
-                        arc: Raphael.animation({arc: startCoordinates}, animationDelay, "bounce"),
-                        wallOne: Raphael.animation({wall: [bucket.startx, bucket.starty, R1, bucket.startAngle]}, animationDelay, "bounce"),
-                        wallTwo: Raphael.animation({wall: [bucket.startx, bucket.starty, R1, bucket.endAngle]}, animationDelay, "bounce")
+                        arc: Raphael.animation({arc: startCoordinates}, animationDelay, BOUNCE_EFFECT_NAME),
+                        wallOne: Raphael.animation({wall: [bucket.startx, bucket.starty, R1, bucket.startAngle]}, animationDelay, BOUNCE_EFFECT_NAME),
+                        wallTwo: Raphael.animation({wall: [bucket.startx, bucket.starty, R1, bucket.endAngle]}, animationDelay, BOUNCE_EFFECT_NAME)
                     }).bind();
             } else if (sliceHoverEffect === "scale") {
                 Animator(bucket, make3d,
@@ -326,93 +359,36 @@
             } else if (sliceHoverEffect === "scale-bounce") {
                 Animator(bucket, make3d,
                     scaleOut,
-                    Raphael.animation(scaleNormal, animationDelay, "bounce"),
+                    Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME),
                     {
                         arc: scaleOut,
                         wallOne: scaleOut,
                         wallTwo: scaleOut
                     },
                     {
-                        arc: Raphael.animation(scaleNormal, animationDelay, "bounce"),
-                        wallOne: Raphael.animation(scaleNormal, animationDelay, "bounce"),
-                        wallTwo: Raphael.animation(scaleNormal, animationDelay, "bounce")
+                        arc: Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME),
+                        wallOne: Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME),
+                        wallTwo: Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME)
                     }).bind();
+            } else if (sliceHoverEffect === "outline") {
+                bucket.slice.mouseover(function () {
+                    bucket.slice.outline.show();
+                    bucket.slice.outline.toFront();
+                });
+
+                bucket.slice.mouseout(function () {
+                    bucket.slice.outline.hide();
+                });
             } else {
                 console.error("Unknown hover effect name: " + sliceHoverEffect);
             }
         }
 
-
-        /*
-         prepareForOutlineEffect(sliceHoverEffect, slice);
-         bindSliceEffect(sliceHoverEffect, slice, startAngle, endAngle);
-         }     */
-
         if (donut && !make3d) {
             if (donutDiameter > 0.9) {
                 donutDiameter = 0.9;
             }
-            donutHole = paper.ellipse(cx, cy, Math.ceil(R1 * donutDiameter), Math.ceil(R2 * donutDiameter)).attr({"stroke": "none", "fill": donutFill});
-        }
-
-        function prepareForOutlineEffect(sliceHoverEffect, slice) {
-            if (sliceHoverEffect !== "" && sliceHoverEffect.indexOf("outline") !== -1) {
-                var outline = paper.path()
-                    .attr({outline: sliceData,
-                        "stroke": WHITE_COLOR,
-                        "stroke-width": 1.5,
-                        "stroke-linejoin": "round",
-                        "fill": fill(color)});
-                slice.outline = outline;
-                outline.hide();
-            }
-        }
-
-        function bindSliceEffect(sliceHoverEffect, slice, startAngle, endAngle) {
-            if (sliceHoverEffect === "") {
-                return;
-            }
-
-           if (sliceHoverEffect === "outline") {
-                slice.mouseover(function () {
-                    slice.outline.show();
-                });
-
-                slice.mouseout(function () {
-                    slice.outline.hide();
-                });
-            } else if (sliceHoverEffect === "outline-bounce") {
-                slice.mouseover(function () {
-                    slice.outline.show();
-                    slice.outline.animate({outline: [startx, starty, R1 + 5, startAngle, endAngle]});
-                });
-
-                slice.mouseout(function () {
-                    slice.outline.animate({outline: [startx, starty, R1, startAngle, endAngle]}, animationDelay, "bounce", function () {
-                        slice.outline.hide();
-                    });
-                });
-            } else if (sliceHoverEffect === "shadow") {
-                slice.mouseover(function () {
-                    if ("undefined" == typeof slice.activeGlow || slice.activeGlow == null) {
-                        var glow = slice.glow({opacity: "0.4", width: "1"});
-                        slice.activeGlow = glow;
-                    }
-                    slice.activeGlow.show();
-                    slice.activeGlow.toFront();
-                    slice.toFront();
-                    if (donut && donutHole) {
-                        donutHole.toFront();
-                    }
-                });
-
-                slice.mouseout(function () {
-                    if (slice.activeGlow != null) {
-                        slice.activeGlow.hide();
-                    }
-                });
-            }
-
+            paper.ellipse(cx, cy, Math.ceil(R1 * donutDiameter), Math.ceil(R2 * donutDiameter)).attr({"stroke": "none", "fill": donutFill});
         }
 
         function renderChartLegend(bucket) {

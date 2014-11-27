@@ -48,14 +48,12 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
 - `donutDiameter` (float): number between 0.1 - 0.9. Determines the donut thickness [default: `0.5`]
 - `growingOnLoad` (boolean): whether or not to animate rendering slice by slice. [default: `false`]
 - `sliceHoverEffect` (string): slice hover effect. [default: no hover effect]. Available options are: 
-  - `shift`: pie slice shifts away from the pie center [see Screenshots](#screenshots)
-  - `shift-bounce`: same as above. When mouse leaves the slice, the slice bounces back inside the pie
-  - `shift-smooth`: same as `shift`. When mouse enters & leaves the slice, the slice moves in & out very smoothly
+  - `shift-fast`: pie slice shifts away from the pie center [see Screenshots](#screenshots)
+  - `shift-slow`: same as `shift-fast`, but slower.
+  - `shift-bounce`: same as `shift-fast`. When mouse leaves the slice, the slice bounces back inside the pie
   - `scale`: pie slice scales up
   - `scale-bounce`: same as above. When mouse leaves the slice, the slice bounces to normal size
   - `outline`: outline appears near the outer slice edge [see Screenshots](#screenshots)
-  - `outline-bounce`: same as above. When mouse leaves the slice, the outline bounces away
-  - `shadow`: pie slice gets shadow around its edges
 
 ##### Screenshots
 ![Pie](screenshots/pie.png?raw=true) Pie
@@ -68,7 +66,6 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
 
 ![Shift](screenshots/shift.png?raw=true) Shift
 ![Outline](screenshots/outline.png?raw=true) Outline
-![Shadow](screenshots/shadow.png?raw=true) Shadow
   
 ### Compatibility
 Raphaël v2.1.2
