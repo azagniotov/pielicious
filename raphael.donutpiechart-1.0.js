@@ -123,7 +123,7 @@
                 y1start = calculateY(startY, innerR2, startAngle),
                 x1end = calculateX(startX, R1, startAngle),
                 y1end = calculateY(startY, R2, startAngle),
-                x2end = calculateX(startY, R1, endAngle),
+                x2end = calculateX(startX, R1, endAngle),
                 y2end = calculateY(startY, R2, endAngle),
                 x2start = startX + innerR1 * Math.cos((startAngle + (endAngle - startAngle)) * RADIAN),
                 y2start = startY + innerR2 * Math.sin((startAngle + (endAngle - startAngle)) * RADIAN),
@@ -366,7 +366,7 @@
                         wallOne: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.startAngle]}, animationDelay, BOUNCE_EFFECT_NAME),
                         wallTwo: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.endAngle]}, animationDelay, BOUNCE_EFFECT_NAME)
                     }).bind();
-            } else if (sliceHoverEffect === "scale") {
+            } else if (sliceHoverEffect === "scale") {                  3
                 Animator(bucket, make3d,
                     scaleOut,
                     scaleNormal,
