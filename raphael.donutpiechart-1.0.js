@@ -1,10 +1,32 @@
-/*
+/**
+ * Protect window.console method calls, e.g. console is not defined on IE
+ * unless dev tools are open, and IE doesn't define console.debug
+ * http://stackoverflow.com/questions/3326650/console-is-undefined-error-for-internet-explorer
+ */
+(function() {
+    if (!window.console) {
+        window.console = {};
+    }
+    // union of Chrome, FF, IE, and Safari console methods
+    var m = [
+        "log", "info", "warn", "error", "debug", "trace", "dir", "group",
+        "groupCollapsed", "groupEnd", "time", "timeEnd", "profile", "profileEnd",
+        "dirxml", "assert", "count", "markTimeline", "timeStamp", "clear"
+    ];
+    // define undefined methods as noops to prevent errors
+    for (var i = 0; i < m.length; i++) {
+        if (!window.console[m[i]]) {
+            window.console[m[i]] = function() {};
+        }
+    }
+})();
+
+/**
  * Donut-Pie Chart library v1.0, based on Raphaël JS by Dmitry Baranovskiy (http://raphaeljs.com)
  *
  * Copyright (c) 2014 Alexander Zagniotov
  * Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) license.
  */
-
 (function () {
     function DonutPieChart(paper, cx, cy, R1, opts) {
         opts = opts || {};
@@ -236,12 +258,16 @@
 
         function bindEffectHandlers(bucket) {
             var shortAnimationDelay = animationDelay / 6,
-                animationOutParams = [bucket.shiftx, bucket.shifty, R1, bucket.startAngle, bucket.endAngle],
-                animationInParams = [bucket.startx, bucket.starty, R1, bucket.startAngle, bucket.endAngle];
+                shiftOutCoordinates = [bucket.shiftx, bucket.shifty, R1, bucket.startAngle, bucket.endAngle],
+                startCoordinates = [bucket.startx, bucket.starty, R1, bucket.startAngle, bucket.endAngle],
+                scaleOut = {transform: "s1.1 1.1 " + startx + " " + starty},
+                scaleNormal = {transform: "s1 1 " + startx + " " + starty},
+                transformOut = {transform: "T" + (bucket.shiftx - cx) + "," + (bucket.shifty - cy)},
+                transformNormal = {transform: "T" + 0 + "," + 0};
 
             if (sliceHoverEffect === "shift-fast") {
-                var shiftOut = Raphael.animation({transform: "T" + (bucket.shiftx - cx) + "," + (bucket.shifty - cy)}, shortAnimationDelay);
-                var shiftIn = Raphael.animation({transform: "T" + 0 + "," + 0}, shortAnimationDelay);
+                var shiftOut = Raphael.animation(transformOut, shortAnimationDelay);
+                var shiftIn = Raphael.animation(transformNormal, shortAnimationDelay);
                 Animator(bucket, make3d, shiftOut, shiftIn,
                     {
                         arc: shiftOut,
@@ -255,8 +281,8 @@
                     }).bind();
 
             } else if (sliceHoverEffect === "shift-slow") {
-                var shiftOut = Raphael.animation({transform: "T" + (bucket.shiftx - cx) + "," + (bucket.shifty - cy)}, animationDelay);
-                var shiftIn = Raphael.animation({transform: "T" + 0 + "," + 0}, animationDelay);
+                var shiftOut = Raphael.animation(transformOut, animationDelay);
+                var shiftIn = Raphael.animation(transformNormal, animationDelay);
                 Animator(bucket, make3d, shiftOut, shiftIn,
                     {
                         arc: shiftOut,
@@ -271,18 +297,48 @@
 
             } else if (sliceHoverEffect === "shift-bounce") {
                 Animator(bucket, make3d,
-                    Raphael.animation({slice: animationOutParams}, shortAnimationDelay),
-                    Raphael.animation({slice: animationInParams}, animationDelay, "bounce"),
+                    Raphael.animation({slice: shiftOutCoordinates}, shortAnimationDelay),
+                    Raphael.animation({slice: startCoordinates}, animationDelay, "bounce"),
                     {
-                        arc: Raphael.animation({arc: animationOutParams}, shortAnimationDelay),
+                        arc: Raphael.animation({arc: shiftOutCoordinates}, shortAnimationDelay),
                         wallOne: Raphael.animation({wall: [bucket.shiftx, bucket.shifty, R1, bucket.startAngle]}, shortAnimationDelay),
                         wallTwo: Raphael.animation({wall: [bucket.shiftx, bucket.shifty, R1, bucket.endAngle]}, shortAnimationDelay)
                     },
                     {
-                        arc: Raphael.animation({arc: animationInParams}, animationDelay, "bounce"),
+                        arc: Raphael.animation({arc: startCoordinates}, animationDelay, "bounce"),
                         wallOne: Raphael.animation({wall: [bucket.startx, bucket.starty, R1, bucket.startAngle]}, animationDelay, "bounce"),
                         wallTwo: Raphael.animation({wall: [bucket.startx, bucket.starty, R1, bucket.endAngle]}, animationDelay, "bounce")
                     }).bind();
+            } else if (sliceHoverEffect === "scale") {
+                Animator(bucket, make3d,
+                    scaleOut,
+                    scaleNormal,
+                    {
+                        arc: scaleOut,
+                        wallOne: scaleOut,
+                        wallTwo: scaleOut
+                    },
+                    {
+                        arc: scaleNormal,
+                        wallOne: scaleNormal,
+                        wallTwo: scaleNormal
+                    }).bind();
+            } else if (sliceHoverEffect === "scale-bounce") {
+                Animator(bucket, make3d,
+                    scaleOut,
+                    Raphael.animation(scaleNormal, animationDelay, "bounce"),
+                    {
+                        arc: scaleOut,
+                        wallOne: scaleOut,
+                        wallTwo: scaleOut
+                    },
+                    {
+                        arc: Raphael.animation(scaleNormal, animationDelay, "bounce"),
+                        wallOne: Raphael.animation(scaleNormal, animationDelay, "bounce"),
+                        wallTwo: Raphael.animation(scaleNormal, animationDelay, "bounce")
+                    }).bind();
+            } else {
+                console.error("Unknown hover effect name: " + sliceHoverEffect);
             }
         }
 
@@ -317,32 +373,7 @@
                 return;
             }
 
-            var startx = cx, starty = cy, shiftDistance = 30;
-
-            var shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
-                shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
-
-            if (sliceHoverEffect === "scale") {
-                slice.mouseover(function () {
-                    slice.stop();
-                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});
-                });
-
-                slice.mouseout(function () {
-                    slice.animate({transform: "s1 1 " + startx + " " + starty}, function () {
-                        slice.attr({fill: fill(color)});
-                    });
-                });
-            } else if (sliceHoverEffect === "scale-bounce") {
-                slice.mouseover(function () {
-                    slice.stop();
-                    slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});
-                });
-
-                slice.mouseout(function () {
-                    slice.animate({transform: "s1 1 " + startx + " " + starty}, animationDelay, "bounce");
-                });
-            } else if (sliceHoverEffect === "outline") {
+           if (sliceHoverEffect === "outline") {
                 slice.mouseover(function () {
                     slice.outline.show();
                 });
@@ -432,7 +463,7 @@
         if (!(this instanceof Animator)) {
             return new Animator(bucket, make3d, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn);
         }
-
+        this._bucket = bucket;
         this._make3d = make3d;
         this._slice = bucket.slice;
         this._arc = bucket.arc;
@@ -457,6 +488,13 @@
                     self._arc.animateWith(self._slice, self._sliceAnimationOut, self._bordersAnimationOut.arc);
                     self._wallOne.animateWith(self._slice, self._sliceAnimationOut, self._bordersAnimationOut.wallOne);
                     self._wallTwo.animateWith(self._slice, self._sliceAnimationOut, self._bordersAnimationOut.wallTwo);
+
+                    if (self._bucket.startAngle >= 0 && self._bucket.startAngle < 180) {
+                        self._arc.toFront();
+                        self._slice.toFront();
+                    } else {
+                        self._arc.toBack();
+                    }
                 }
             });
 
