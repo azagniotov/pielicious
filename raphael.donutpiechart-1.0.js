@@ -31,21 +31,19 @@
 (function () {
     function DonutPieChart(paper, cx, cy, R1, opts) {
         opts = opts || {};
-        var rad = (Math.PI / 180),
+        var RADIAN = (Math.PI / 180),
             WHITE_COLOR = "#ffffff",
             BOUNCE_EFFECT_NAME = "bounce",
             data = opts.data || [],
-            colors = opts.colors || [],
             gradient = opts.gradient || false,
+            colors = opts.colors || [],
             hoverTitles = opts.hoverTitles || [],
             handles = opts.handles || [],
             hrefs = opts.hrefs || [],
             make3d = (opts.make3d && typeof opts.make3d === 'object') || false,
             size3d = (make3d && opts.make3d.height ? Math.abs(opts.make3d.height) : 25),
-            R2 = make3d ? R1 / 2 : R1,
             donut = (opts.donut && typeof opts.donut === 'object') || false,
-            donutFill = (donut && opts.donut.fill ? opts.donut.fill : WHITE_COLOR),
-            donutDiameter = (donut && opts.donut.diameter ? Math.abs(opts.donut.diameter) : 0.5),
+            donutDiameter = (donut && opts.donut.diameter ? (Math.abs(opts.donut.diameter) > 0.9 ? 0.9 : Math.abs(opts.donut.diameter)) : 0.5),
             legend = (opts.legend && typeof opts.legend === 'object') || false,
             legendLabels = (legend && opts.legend.labels ? opts.legend.labels : []),
             legendXstart = (legend && opts.legend.x ? opts.legend.x : cx + R1 + 30),
@@ -58,7 +56,7 @@
             marker = opts.marker || "circle",
             growingOnLoad = opts.growingOnLoad || false,
             sliceHoverEffect = opts.sliceHoverEffect || "",
-            shiftDistance = 25,
+            shiftDistance = (make3d ? 20 : 15),
             total = 0,
             animationDelay = 600,
             slices = paper.set(),
@@ -74,7 +72,7 @@
         for (_index = 0; _index < data.length; _index++) {
             bucket[_index] = {};
 
-            var startx = cx, starty = cy,
+            var startX = cx, startY = cy,
                 value = data[_index] || 0,
                 color = colors[_index] || "#FF0000",
                 label = legendLabels[_index] || "",
@@ -85,8 +83,8 @@
                 endAngle = (_index === 0 ? 0 : endAngle),
                 startAngle = endAngle,
                 endAngle = startAngle + sliceAngle,
-                shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
-                shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
+                shiftX = startX + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * RADIAN),
+                shiftY = startY + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * RADIAN);
 
             bucket[_index].color = color;
             bucket[_index].label = label;
@@ -95,48 +93,67 @@
             bucket[_index].handle = handle;
             bucket[_index].startAngle = startAngle;
             bucket[_index].endAngle = endAngle;
-            bucket[_index].startx = startx;
-            bucket[_index].starty = starty;
-            bucket[_index].shiftx = shiftx;
-            bucket[_index].shifty = shifty;
-            bucket[_index].sliceOrigin = [startx, starty, R1, startAngle, endAngle];
-            bucket[_index].sliceOriginZero = [startx, starty, R1, 0, 0];
+            bucket[_index].startX = startX;
+            bucket[_index].startY = startY;
+            bucket[_index].shiftX = shiftX;
+            bucket[_index].shiftY = shiftY;
+            bucket[_index].sliceOrigin = [startX, startY, R1, startAngle, endAngle];
+            bucket[_index].sliceOriginZero = [startX, startY, R1, 0, 0];
 
             if (make3d) {
                 bucket[_index].arcOrigin = bucket[_index].sliceOrigin;
-                bucket[_index].wallOneOrigin = [startx, starty, R1, startAngle];
-                bucket[_index].wallTwoOrigin = [startx, starty, R1, endAngle];
+                bucket[_index].wallOneOrigin = [startX, startY, R1, startAngle];
+                bucket[_index].wallTwoOrigin = [startX, startY, R1, endAngle];
                 bucket[_index].arcOriginZero = bucket[_index].sliceOriginZero;
-                bucket[_index].wallOneOriginZero = [startx, starty, R1, 0];
-                bucket[_index].wallTwoOriginZero = [startx, starty, R1, 0];
+                bucket[_index].wallOneOriginZero = [startX, startY, R1, 0];
+                bucket[_index].wallTwoOriginZero = [startX, startY, R1, 0];
             }
         }
 
-        paper.customAttributes.slice = function (startx, starty, R1, startAngle, endAngle) {
+        paper.customAttributes.slice = function (startX, startY, R1, startAngle, endAngle) {
 
             if (startAngle === 0 && endAngle === 0) {
                 return [];
             }
 
             var R2 = make3d ? R1 / 2 : R1,
-                x1 = startx + R1 * Math.cos(startAngle * rad),
-                x2 = startx + R1 * Math.cos(endAngle * rad),
-                y1 = starty + R2 * Math.sin(startAngle * rad),
-                y2 = starty + R2 * Math.sin(endAngle * rad),
+                innerR1 = (R1 * donutDiameter),
+                innerR2 = (R2 * donutDiameter),
+                x1start = calculateX(startX, innerR1, startAngle),
+                y1start = calculateY(startY, innerR2, startAngle),
+                x1end = calculateX(startX, R1, startAngle),
+                y1end = calculateY(startY, R2, startAngle),
+                x2end = calculateX(startY, R1, endAngle),
+                y2end = calculateY(startY, R2, endAngle),
+                x2start = startX + innerR1 * Math.cos((startAngle + (endAngle - startAngle)) * RADIAN),
+                y2start = startY + innerR2 * Math.sin((startAngle + (endAngle - startAngle)) * RADIAN),
                 largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
                 sweepFlag = 1; // positive angle
 
-            return {
-                path: [
-                    ["M", startx, starty ],
-                    ["L", x1, y1 ],
-                    ["A", R1, R2, 0, +largeArcFlag, sweepFlag, x2, y2 ],
-                    ["Z"]
-                ]
-            };
+            if (donut && !make3d) {
+                return {
+                    path: [
+                        ["M", x1start, y1start ],
+                        ["L", x1end, y1end ],
+                        ["A", R1, R2, 0, +largeArcFlag, 1, x2end, y2end ],
+                        ["L", x2start, y2start ],
+                        ["A", innerR1, innerR2, 0, +(largeArcFlag), 0, x1start, y1start ],
+                        ["Z"]
+                    ]
+                };
+            } else {
+                return {
+                    path: [
+                        ["M", startX, startY ],
+                        ["L", x1end, y1end ],
+                        ["A", R1, R2, 0, +largeArcFlag, sweepFlag, x2end, y2end ],
+                        ["Z"]
+                    ]
+                };
+            }
         }
 
-        paper.customAttributes.arc = function (startx, starty, R1, startAngle, endAngle) {
+        paper.customAttributes.arc = function (startX, startY, R1, startAngle, endAngle) {
 
             if (startAngle === 0 && endAngle === 0) {
                 return [];
@@ -145,23 +162,22 @@
             }
 
             var R2 = make3d ? R1 / 2 : R1,
-                x1start = startx + R1 * Math.cos(startAngle * rad),
-                y1start = starty + R2 * Math.sin(startAngle * rad),
-                x1end = startx + R1 * Math.cos(startAngle * rad),
-                y1end = (starty + size3d) + R2 * Math.sin(startAngle * rad),
-                x2start = startx + R1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
-                y2start = starty + R2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
-                x2end = startx + R1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
-                y2end = (starty + size3d) + R2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
+                x1start = calculateX(startX, R1, startAngle),
+                y1start = calculateY(startY, R2, startAngle),
+                y1end = calculateY(startY + size3d, R2, startAngle),
+
+                x2start = startX + R1 * Math.cos((startAngle + (endAngle - startAngle)) * RADIAN),
+                y2start = startY + R2 * Math.sin((startAngle + (endAngle - startAngle)) * RADIAN),
+                y2end = (startY + size3d) + R2 * Math.sin((startAngle + (endAngle - startAngle)) * RADIAN),
+
                 largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
                 sweepFlagPositiveAngle = 1,
                 sweepFlagNegativeAngle = 0;
-
             return {
                 path: [
                     ["M", x1start, y1start ],
-                    ["L", x1end, y1end ],
-                    ["A", R1, R2, 0, +largeArcFlag, sweepFlagPositiveAngle, x2end, y2end ],
+                    ["L", x1start, y1end ], // draw down
+                    ["A", R1, R2, 0, +largeArcFlag, sweepFlagPositiveAngle, x2start, y2end ],
                     ["L", x2start, y2start ],
                     ["A", R1, R2, 0, +largeArcFlag, sweepFlagNegativeAngle, x1start, y1start ],
                     ["Z"]
@@ -169,19 +185,19 @@
             };
         }
 
-        paper.customAttributes.outline = function (startx, starty, R1, startAngle, endAngle) {
+        paper.customAttributes.outline = function (startX, startY, R1, startAngle, endAngle) {
             var innerR1 = R1 + (make3d ? 3 : 1),
                 innerR2 = (make3d ? innerR1 / 2 : innerR1),
                 outerR1 = innerR1 + (make3d ? 14 : 10),
                 outerR2 = innerR2 + (make3d ? 6 : 10),
-                x1start = cx + innerR1 * Math.cos(startAngle * rad),
-                y1start = cy + innerR2 * Math.sin(startAngle * rad),
-                x1end = cx + outerR1 * Math.cos(startAngle * rad),
-                y1end = cy + outerR2 * Math.sin(startAngle * rad),
-                x2start = cx + innerR1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
-                y2start = cy + innerR2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
-                x2end = cx + outerR1 * Math.cos((startAngle + (endAngle - startAngle)) * rad),
-                y2end = cy + outerR2 * Math.sin((startAngle + (endAngle - startAngle)) * rad),
+                x1start = calculateX(startX, innerR1, startAngle),
+                y1start = calculateY(startY, innerR2, startAngle),
+                x1end = calculateX(startX, outerR1, startAngle),
+                y1end = calculateY(startY, outerR2, startAngle),
+                x2start = startX + innerR1 * Math.cos((startAngle + (endAngle - startAngle)) * RADIAN),
+                y2start = startY + innerR2 * Math.sin((startAngle + (endAngle - startAngle)) * RADIAN),
+                x2end = startX + outerR1 * Math.cos((startAngle + (endAngle - startAngle)) * RADIAN),
+                y2end = startY + outerR2 * Math.sin((startAngle + (endAngle - startAngle)) * RADIAN),
                 flag = (Math.abs(endAngle - startAngle) > 180);
 
             return {
@@ -196,25 +212,34 @@
             }
         };
 
-        paper.customAttributes.wall = function (startx, starty, R1, angle) {
+        paper.customAttributes.wall = function (startX, startY, R1, angle) {
             if (angle === 0) {
                 return [];
             }
 
             var R2 = make3d ? R1 / 2 : R1,
-                x = startx + R1 * Math.cos(angle * rad),
-                y = starty + R2 * Math.sin(angle * rad);
+                x = calculateX(startX, R1, angle),
+                y = calculateY(startY, R2, angle);
 
             return {
                 path: [
-                    ["M", startx, starty ],
-                    ["L", startx, starty + size3d ],
+                    ["M", startX, startY ],
+                    ["L", startX, startY + size3d ],
                     ["L", x, y + size3d ],
                     ["L", x, y ],
                     ["Z"]
                 ]
             };
         }
+
+        function calculateX(startX, R, angle) {
+            return startX + R * Math.cos(angle * RADIAN);
+        }
+
+        function calculateY(startY, R, angle) {
+            return startY + R * Math.sin(angle * RADIAN);
+        }
+
 
         for (_index = 0; _index < data.length; _index++) {
             var obj = bucket[_index];
@@ -289,12 +314,12 @@
         }
 
         function bindEffectHandlers(bucket) {
-            var shortAnimationDelay = animationDelay / 6,
-                shiftOutCoordinates = [bucket.shiftx, bucket.shifty, R1, bucket.startAngle, bucket.endAngle],
-                startCoordinates = [bucket.startx, bucket.starty, R1, bucket.startAngle, bucket.endAngle],
-                scaleOut = {transform: "s1.1 1.1 " + startx + " " + starty},
-                scaleNormal = {transform: "s1 1 " + startx + " " + starty},
-                transformOut = {transform: "T" + (bucket.shiftx - cx) + "," + (bucket.shifty - cy)},
+            var shortAnimationDelay = animationDelay / 4,
+                shiftOutCoordinates = [bucket.shiftX, bucket.shiftY, R1, bucket.startAngle, bucket.endAngle],
+                startCoordinates = [bucket.startX, bucket.startY, R1, bucket.startAngle, bucket.endAngle],
+                scaleOut = {transform: "s1.1 1.1 " + startX + " " + startY},
+                scaleNormal = {transform: "s1 1 " + startX + " " + startY},
+                transformOut = {transform: "T" + (bucket.shiftX - cx) + "," + (bucket.shiftY - cy)},
                 transformNormal = {transform: "T" + 0 + "," + 0};
 
             if (sliceHoverEffect === "shift-fast") {
@@ -333,13 +358,13 @@
                     Raphael.animation({slice: startCoordinates}, animationDelay, BOUNCE_EFFECT_NAME),
                     {
                         arc: Raphael.animation({arc: shiftOutCoordinates}, shortAnimationDelay),
-                        wallOne: Raphael.animation({wall: [bucket.shiftx, bucket.shifty, R1, bucket.startAngle]}, shortAnimationDelay),
-                        wallTwo: Raphael.animation({wall: [bucket.shiftx, bucket.shifty, R1, bucket.endAngle]}, shortAnimationDelay)
+                        wallOne: Raphael.animation({wall: [bucket.shiftX, bucket.shiftY, R1, bucket.startAngle]}, shortAnimationDelay),
+                        wallTwo: Raphael.animation({wall: [bucket.shiftX, bucket.shiftY, R1, bucket.endAngle]}, shortAnimationDelay)
                     },
                     {
                         arc: Raphael.animation({arc: startCoordinates}, animationDelay, BOUNCE_EFFECT_NAME),
-                        wallOne: Raphael.animation({wall: [bucket.startx, bucket.starty, R1, bucket.startAngle]}, animationDelay, BOUNCE_EFFECT_NAME),
-                        wallTwo: Raphael.animation({wall: [bucket.startx, bucket.starty, R1, bucket.endAngle]}, animationDelay, BOUNCE_EFFECT_NAME)
+                        wallOne: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.startAngle]}, animationDelay, BOUNCE_EFFECT_NAME),
+                        wallTwo: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.endAngle]}, animationDelay, BOUNCE_EFFECT_NAME)
                     }).bind();
             } else if (sliceHoverEffect === "scale") {
                 Animator(bucket, make3d,
@@ -381,13 +406,6 @@
             } else {
                 console.error("Unknown hover effect name: " + sliceHoverEffect);
             }
-        }
-
-        if (donut && !make3d) {
-            if (donutDiameter > 0.9) {
-                donutDiameter = 0.9;
-            }
-            paper.ellipse(cx, cy, Math.ceil(R1 * donutDiameter), Math.ceil(R2 * donutDiameter)).attr({"stroke": "none", "fill": donutFill});
         }
 
         function renderChartLegend(bucket) {

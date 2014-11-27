@@ -42,12 +42,13 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
 - `marker` (string): legend marker. Available options are `rect`, `circle` & `ellipse`. [default: `circle`]
 - `fontFamily` (string): legend font type. [default: `Arial`]
 - `fontSize` (string): legend font size. [default: `14`]
-- `donut` (boolean): whether or not to render donut chart instead of pie chart. [default: `false`]
+- `donut` (object): if set, the pie will turn to donut chart. Not available in 3D [default: `false`]
+    - {
+        diameter (float): between 0.1 - 0.9. Determines the donut thickness [default: `0.5`]
+    }
 - `exploded` (boolean): whether or not to render the pie slices exploded. [default: `false`]
-- `donutFill` (string): fill color of the donut center [default: `#ffffff`]
-- `donutDiameter` (float): number between 0.1 - 0.9. Determines the donut thickness [default: `0.5`]
 - `growingOnLoad` (boolean): whether or not to animate rendering slice by slice. [default: `false`]
-- `sliceHoverEffect` (string): slice hover effect. [default: no hover effect]. Available options are: 
+- `sliceHoverEffect` (string): slice hover effect. [default: no hover effect]. Available options are:
   - `shift-fast`: pie slice shifts away from the pie center [see Screenshots](#screenshots)
   - `shift-slow`: same as `shift-fast`, but slower.
   - `shift-bounce`: same as `shift-fast`. When mouse leaves the slice, the slice bounces back inside the pie
