@@ -84,9 +84,8 @@
                 sliceAngle = 360 * value / total,
                 endAngle = (_index === 0 ? 0 : endAngle),
                 startAngle = endAngle,
-                endAngle = startAngle + sliceAngle;
-
-            var shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
+                endAngle = startAngle + sliceAngle,
+                shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
                 shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
 
             bucket[_index].color = color;
