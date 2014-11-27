@@ -14,11 +14,11 @@
             colors = opts.colors || [],
             gradient = opts.gradient || false,
             hoverTitles = opts.hoverTitles || [],
-            sliceHandles = opts.sliceHandles || [],
+            handles = opts.handles || [],
             hrefs = opts.hrefs || [],
             make3d = (opts.make3d && typeof opts.make3d === 'object') || false,
+            size3d = (make3d && opts.make3d.height ? Math.abs(opts.make3d.height) : 25),
             R2 = make3d ? R1 / 2 : R1,
-            size3d = (make3d && opts.make3d.size ? opts.make3d.size : 25),
             donut = (opts.donut && typeof opts.donut === 'object') || false,
             donutFill = (donut && opts.donut.fill ? opts.donut.fill : WHITE_COLOR),
             donutDiameter = (donut && opts.donut.diameter ? Math.abs(opts.donut.diameter) : 0.5),
@@ -34,7 +34,7 @@
             marker = opts.marker || "circle",
             growingOnLoad = opts.growingOnLoad || false,
             sliceHoverEffect = opts.sliceHoverEffect || "",
-            shiftDistance = 35,
+            shiftDistance = 25,
             total = 0,
             animationDelay = 600,
             slices = paper.set(),
@@ -42,14 +42,14 @@
             descriptions = paper.set(),
             donutHole = null,
             _index,
-            points = [];
+            bucket = [];
 
         for (_index = 0; _index < data.length; _index++) {
             total += data[_index];
         }
 
         for (_index = 0; _index < data.length; _index++) {
-            points[_index] = {};
+            bucket[_index] = {};
 
             var startx = cx, starty = cy,
                 value = data[_index] || 0,
@@ -57,7 +57,7 @@
                 label = legendLabels[_index] || "",
                 title = hoverTitles[_index] || "",
                 href = hrefs[_index] || "",
-                sliceHandle = sliceHandles[_index] || "",
+                handle = handles[_index] || "",
                 sliceAngle = 360 * value / total,
                 endAngle = (_index === 0 ? 0 : endAngle),
                 startAngle = endAngle,
@@ -66,27 +66,27 @@
             var shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
                 shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
 
-            points[_index].color = color;
-            points[_index].label = label;
-            points[_index].title = title;
-            points[_index].href = href;
-            points[_index].handle = sliceHandle;
-            points[_index].startAngle = startAngle;
-            points[_index].endAngle = endAngle;
-            points[_index].startx = startx;
-            points[_index].starty = starty;
-            points[_index].shiftx = shiftx;
-            points[_index].shifty = shifty;
-            points[_index].sliceOrigin = [startx, starty, R1, startAngle, endAngle];
-            points[_index].sliceOriginZero = [startx, starty, R1, 0, 0];
+            bucket[_index].color = color;
+            bucket[_index].label = label;
+            bucket[_index].title = title;
+            bucket[_index].href = href;
+            bucket[_index].handle = handle;
+            bucket[_index].startAngle = startAngle;
+            bucket[_index].endAngle = endAngle;
+            bucket[_index].startx = startx;
+            bucket[_index].starty = starty;
+            bucket[_index].shiftx = shiftx;
+            bucket[_index].shifty = shifty;
+            bucket[_index].sliceOrigin = [startx, starty, R1, startAngle, endAngle];
+            bucket[_index].sliceOriginZero = [startx, starty, R1, 0, 0];
 
             if (make3d) {
-                points[_index].arcOrigin = points[_index].sliceOrigin;
-                points[_index].wallOneOrigin = [startx, starty, R1, startAngle];
-                points[_index].wallTwoOrigin = [startx, starty, R1, endAngle];
-                points[_index].arcOriginZero = points[_index].sliceOriginZero;
-                points[_index].wallOneOriginZero = [startx, starty, R1, 0];
-                points[_index].wallTwoOriginZero = [startx, starty, R1, 0];
+                bucket[_index].arcOrigin = bucket[_index].sliceOrigin;
+                bucket[_index].wallOneOrigin = [startx, starty, R1, startAngle];
+                bucket[_index].wallTwoOrigin = [startx, starty, R1, endAngle];
+                bucket[_index].arcOriginZero = bucket[_index].sliceOriginZero;
+                bucket[_index].wallOneOriginZero = [startx, starty, R1, 0];
+                bucket[_index].wallTwoOriginZero = [startx, starty, R1, 0];
             }
         }
 
@@ -106,9 +106,9 @@
 
             return {
                 path: [
-                    ["M", startx, starty, ],
-                    ["L", x1, y1, ],
-                    ["A", R1, R2, 0, +largeArcFlag, sweepFlag, x2, y2, ],
+                    ["M", startx, starty ],
+                    ["L", x1, y1 ],
+                    ["A", R1, R2, 0, +largeArcFlag, sweepFlag, x2, y2 ],
                     ["Z"]
                 ]
             };
@@ -137,11 +137,11 @@
 
             return {
                 path: [
-                    ["M", x1start, y1start, ],
-                    ["L", x1end, y1end, ],
-                    ["A", R1, R2, 0, +largeArcFlag, sweepFlagPositiveAngle, x2end, y2end, ],
-                    ["L", x2start, y2start, ],
-                    ["A", R1, R2, 0, +largeArcFlag, sweepFlagNegativeAngle, x1start, y1start, ],
+                    ["M", x1start, y1start ],
+                    ["L", x1end, y1end ],
+                    ["A", R1, R2, 0, +largeArcFlag, sweepFlagPositiveAngle, x2end, y2end ],
+                    ["L", x2start, y2start ],
+                    ["A", R1, R2, 0, +largeArcFlag, sweepFlagNegativeAngle, x1start, y1start ],
                     ["Z"]
                 ]
             };
@@ -158,49 +158,50 @@
 
             return {
                 path: [
-                    ["M", startx, starty, ],
-                    ["L", startx, starty + size3d, ],
-                    ["L", x, y + size3d, ],
-                    ["L", x, y, ],
+                    ["M", startx, starty ],
+                    ["L", startx, starty + size3d ],
+                    ["L", x, y + size3d ],
+                    ["L", x, y ],
                     ["Z"]
                 ]
             };
         }
 
         for (_index = 0; _index < data.length; _index++) {
-            var obj = points[_index];
+            var obj = bucket[_index];
             var grow = growingOnLoad === true;
             if (make3d) {
-                points[_index].wallOne = paper.path().attr(attr("wall", obj, (grow ? obj.wallOneOriginZero : obj.wallOneOrigin)));
-                points[_index].wallTwo = paper.path().attr(attr("wall", obj, (grow ? obj.wallTwoOriginZero : obj.wallTwoOrigin)));
-                points[_index].arc = paper.path().attr(attr("arc", obj, (grow ? obj.arcOriginZero : obj.arcOrigin)));
+                bucket[_index].wallOne = paper.path().attr(attr("wall", obj, (grow ? obj.wallOneOriginZero : obj.wallOneOrigin)));
+                bucket[_index].wallTwo = paper.path().attr(attr("wall", obj, (grow ? obj.wallTwoOriginZero : obj.wallTwoOrigin)));
+                bucket[_index].arc = paper.path().attr(attr("arc", obj, (grow ? obj.arcOriginZero : obj.arcOrigin)));
             }
-            points[_index].slice = paper.path().attr(attr("slice", obj, (grow ? obj.sliceOriginZero : obj.sliceOrigin)));
-            slices.push(points[_index].slice);
+            bucket[_index].slice = paper.path().attr(attr("slice", obj, (grow ? obj.sliceOriginZero : obj.sliceOrigin)));
+            bucket[_index].slice.handle = bucket[_index].handle;
+            slices.push(bucket[_index].slice);
 
-            bindEffectHandlers(points[_index]);
-            renderChartLegend(points[_index].label, points[_index].color);
+            bindEffectHandlers(bucket[_index]);
+            renderChartLegend(bucket[_index]);
         }
 
         if (make3d) {
             for (_index = 0; _index < data.length; _index++) {
-                var obj = points[_index];
+                var obj = bucket[_index];
                 if (obj.startAngle >= 90 && obj.startAngle < 270) {
                     // order is important
-                    points[_index].wallOne.toBack();
-                    points[_index].wallTwo.toBack();
+                    bucket[_index].wallOne.toBack();
+                    bucket[_index].wallTwo.toBack();
                 } else if (obj.endAngle > 270 && obj.endAngle <= 360) {
-                    points[_index].wallOne.toBack();
+                    bucket[_index].wallOne.toBack();
                 } else if (obj.endAngle > 0 && obj.endAngle < 90) {
-                    points[_index].wallTwo.toFront();
+                    bucket[_index].wallTwo.toFront();
                 }
 
                 if (obj.startAngle >= 0 && obj.startAngle < 180) {
-                    points[_index].arc.toFront();
+                    bucket[_index].arc.toFront();
                 } else {
-                    points[_index].arc.toBack();
+                    bucket[_index].arc.toBack();
                 }
-                points[_index].slice.toFront();
+                bucket[_index].slice.toFront();
             }
         }
 
@@ -220,81 +221,71 @@
         if (growingOnLoad) {
             var timeout = setTimeout(function () {
 
-                for (_index = 0; _index < points.length; _index++) {
-                    points[_index].slice.animate({slice: points[_index].sliceOrigin}, animationDelay, "backOut");
+                for (_index = 0; _index < bucket.length; _index++) {
+                    bucket[_index].slice.animate({slice: bucket[_index].sliceOrigin}, animationDelay, "backOut");
 
                     if (make3d) {
-                        points[_index].arc.animate({arc: points[_index].arcOrigin}, animationDelay, "backOut");
-                        points[_index].wallOne.animate({wall: points[_index].wallOneOrigin}, animationDelay, "backOut");
-                        points[_index].wallTwo.animate({wall: points[_index].wallTwoOrigin}, animationDelay, "backOut");
+                        bucket[_index].arc.animate({arc: bucket[_index].arcOrigin}, animationDelay, "backOut");
+                        bucket[_index].wallOne.animate({wall: bucket[_index].wallOneOrigin}, animationDelay, "backOut");
+                        bucket[_index].wallTwo.animate({wall: bucket[_index].wallTwoOrigin}, animationDelay, "backOut");
                     }
                 }
                 clearTimeout(timeout);
             }, 200);
         }
 
-        function bindEffectHandlers(point) {
-            var animationOutParams = [point.shiftx, point.shifty, R1, point.startAngle, point.endAngle];
-            var animationInParams = [point.startx, point.starty, R1, point.startAngle, point.endAngle];
+        function bindEffectHandlers(bucket) {
+            var shortAnimationDelay = animationDelay / 6,
+                animationOutParams = [bucket.shiftx, bucket.shifty, R1, bucket.startAngle, bucket.endAngle],
+                animationInParams = [bucket.startx, bucket.starty, R1, bucket.startAngle, bucket.endAngle];
 
-            var sliceShiftOut = Raphael.animation({slice: animationOutParams});
-            var sliceShiftIn = Raphael.animation({slice: animationInParams}, animationDelay, "bounce");
+            if (sliceHoverEffect === "shift-fast") {
+                var shiftOut = Raphael.animation({transform: "T" + (bucket.shiftx - cx) + "," + (bucket.shifty - cy)}, shortAnimationDelay);
+                var shiftIn = Raphael.animation({transform: "T" + 0 + "," + 0}, shortAnimationDelay);
+                Animator(bucket, make3d, shiftOut, shiftIn,
+                    {
+                        arc: shiftOut,
+                        wallOne: shiftOut,
+                        wallTwo: shiftOut
+                    },
+                    {
+                        arc: shiftIn,
+                        wallOne: shiftIn,
+                        wallTwo: shiftIn
+                    }).bind();
 
-            var slice = point.slice;
-            var arc = point.arc;
-            var wallOne = point.wallOne;
-            var wallTwo = point.wallTwo;
-
-            if (sliceHoverEffect === "shift-smooth") {
-                var shiftOut = Raphael.animation({transform: "T" + (point.shiftx - cx) + "," + (point.shifty - cy)}, animationDelay);
+            } else if (sliceHoverEffect === "shift-slow") {
+                var shiftOut = Raphael.animation({transform: "T" + (bucket.shiftx - cx) + "," + (bucket.shifty - cy)}, animationDelay);
                 var shiftIn = Raphael.animation({transform: "T" + 0 + "," + 0}, animationDelay);
-
-                slice.mouseover(function () {
-                    slice.stop();
-                    slice.animate(shiftOut);
-                    if (make3d) {
-                        arc.stop();
-                        wallOne.stop();
-                        wallTwo.stop();
-                        arc.animateWith(slice, shiftOut, shiftOut);
-                        wallOne.animateWith(slice, shiftOut, shiftOut);
-                        wallTwo.animateWith(slice, shiftOut, shiftOut);
-                    }
-                });
-
-                slice.mouseout(function () {
-                    slice.animate(shiftIn);
-                    if (make3d) {
-                        arc.animateWith(slice, shiftIn, shiftIn);
-                        wallOne.animateWith(slice, shiftIn, shiftIn);
-                        wallTwo.animateWith(slice, shiftIn, shiftIn);
-                    }
-                });
+                Animator(bucket, make3d, shiftOut, shiftIn,
+                    {
+                        arc: shiftOut,
+                        wallOne: shiftOut,
+                        wallTwo: shiftOut
+                    },
+                    {
+                        arc: shiftIn,
+                        wallOne: shiftIn,
+                        wallTwo: shiftIn
+                    }).bind();
 
             } else if (sliceHoverEffect === "shift-bounce") {
-                slice.mouseover(function () {
-                    slice.stop();
-                    slice.animate(sliceShiftOut);
-                    if (make3d) {
-                        arc.stop();
-                        wallOne.stop();
-                        wallTwo.stop();
-                        arc.animateWith(slice, sliceShiftOut, Raphael.animation({arc: animationOutParams}));
-                        wallOne.animateWith(slice, sliceShiftOut, Raphael.animation({wall: [point.shiftx, point.shifty, R1, point.startAngle]}));
-                        wallTwo.animateWith(slice, sliceShiftOut, Raphael.animation({wall: [point.shiftx, point.shifty, R1, point.endAngle]}));
-                    }
-                });
-
-                slice.mouseout(function () {
-                    slice.animate(sliceShiftIn);
-                    if (make3d) {
-                        arc.animateWith(slice, sliceShiftIn, Raphael.animation({arc: animationInParams}, animationDelay, "bounce"));
-                        wallOne.animateWith(slice, sliceShiftIn, Raphael.animation({wall: [point.startx, point.starty, R1, point.startAngle]}, animationDelay, "bounce"));
-                        wallTwo.animateWith(slice, sliceShiftIn, Raphael.animation({wall: [point.startx, point.starty, R1, point.endAngle]}, animationDelay, "bounce"));
-                    }
-                });
+                Animator(bucket, make3d,
+                    Raphael.animation({slice: animationOutParams}, shortAnimationDelay),
+                    Raphael.animation({slice: animationInParams}, animationDelay, "bounce"),
+                    {
+                        arc: Raphael.animation({arc: animationOutParams}, shortAnimationDelay),
+                        wallOne: Raphael.animation({wall: [bucket.shiftx, bucket.shifty, R1, bucket.startAngle]}, shortAnimationDelay),
+                        wallTwo: Raphael.animation({wall: [bucket.shiftx, bucket.shifty, R1, bucket.endAngle]}, shortAnimationDelay)
+                    },
+                    {
+                        arc: Raphael.animation({arc: animationInParams}, animationDelay, "bounce"),
+                        wallOne: Raphael.animation({wall: [bucket.startx, bucket.starty, R1, bucket.startAngle]}, animationDelay, "bounce"),
+                        wallTwo: Raphael.animation({wall: [bucket.startx, bucket.starty, R1, bucket.endAngle]}, animationDelay, "bounce")
+                    }).bind();
             }
         }
+
 
         /*
          prepareForOutlineEffect(sliceHoverEffect, slice);
@@ -331,16 +322,7 @@
             var shiftx = startx + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * rad),
                 shifty = starty + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * rad);
 
-            if (sliceHoverEffect === "shift") {
-                slice.mouseover(function () {
-                    slice.stop();
-                    slice.animate({slice: [shiftx, shifty, R1, startAngle, endAngle]});
-                });
-
-                slice.mouseout(function () {
-                    slice.animate({slice: [startx, starty, R1, startAngle, endAngle]});
-                });
-            } else if (sliceHoverEffect === "scale") {
+            if (sliceHoverEffect === "scale") {
                 slice.mouseover(function () {
                     slice.stop();
                     slice.animate({transform: "s1.1 1.1 " + startx + " " + starty});
@@ -402,7 +384,9 @@
 
         }
 
-        function renderChartLegend(label, color) {
+        function renderChartLegend(bucket) {
+            var label = bucket.label,
+                color = bucket.color;
             if (label !== "") {
                 legendLabelYstart += 10;
                 var radius = 9;
@@ -419,13 +403,13 @@
 
                 if (markerElement != null) {
                     markerElement.attr(markerAttrs);
-                    markerElement.handle = sliceHandle;
+                    markerElement.handle = bucket.handle;
                     markers.push(markerElement);
                 }
 
                 var text = paper.text(legendLabelXstart, legendLabelYstart, label);
                 text.attr({"title": label, "font-family": fontFamily, "font-weight": "normal", "fill": "#474747", "cursor": cursor, "font-size": fontSize, "text-anchor": "start"});
-                text.handle = sliceHandle;
+                text.handle = bucket.handle;
                 descriptions.push(text);
 
                 legendYstart += 30;
@@ -444,19 +428,59 @@
         return {slices: slices.items, markers: markers.items, descriptions: descriptions.items};
     };
 
-    var PieColor = function PieColor(color, gradientAngle) {
-        if (color instanceof PieColor) {
-            return color;
+    var Animator = function Animator(bucket, make3d, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn) {
+        if (!(this instanceof Animator)) {
+            return new Animator(bucket, make3d, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn);
         }
 
+        this._make3d = make3d;
+        this._slice = bucket.slice;
+        this._arc = bucket.arc;
+        this._wallOne = bucket.wallOne;
+        this._wallTwo = bucket.wallTwo;
+        this._sliceAnimationOut = sliceAnimationOut;
+        this._sliceAnimationIn = sliceAnimationIn;
+        this._bordersAnimationOut = bordersAnimationOut;
+        this._bordersAnimationIn = bordersAnimationIn;
+    };
+
+    Animator.prototype = {
+        bind: function () {
+            var self = this;
+            this._slice.mouseover(function () {
+                self._slice.stop();
+                self._slice.animate(self._sliceAnimationOut);
+                if (self._make3d) {
+                    self._arc.stop();
+                    self._wallOne.stop();
+                    self._wallTwo.stop();
+                    self._arc.animateWith(self._slice, self._sliceAnimationOut, self._bordersAnimationOut.arc);
+                    self._wallOne.animateWith(self._slice, self._sliceAnimationOut, self._bordersAnimationOut.wallOne);
+                    self._wallTwo.animateWith(self._slice, self._sliceAnimationOut, self._bordersAnimationOut.wallTwo);
+                }
+            });
+
+            this._slice.mouseout(function () {
+                self._slice.animate(self._sliceAnimationIn);
+                if (self._make3d) {
+                    self._arc.animateWith(self._slice, self._sliceAnimationIn, self._bordersAnimationIn.arc);
+                    self._wallOne.animateWith(self._slice, self._sliceAnimationIn, self._bordersAnimationIn.wallOne);
+                    self._wallTwo.animateWith(self._slice, self._sliceAnimationIn, self._bordersAnimationIn.wallTwo);
+                }
+            });
+        }
+    }
+
+    var PieColor = function PieColor(color, gradientAngle) {
         if (!(this instanceof PieColor)) {
             return new PieColor(color, gradientAngle);
         }
-        this._originalColor = color,
-            this._gradientAngle = gradientAngle;
+        this._originalColor = color;
+        this._gradientAngle = gradientAngle;
         this._rgb = Raphael.getRGB(color);
     };
 
+    // Adopted from https://bgrins.github.io/TinyColor/
     PieColor.prototype = {
         toHsl: function () {
             var r = this._rgb.r / 255,
