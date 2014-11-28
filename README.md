@@ -51,19 +51,19 @@ var pie = paper.donutpiechart(150, 150, 100, {
 - `cursor` (string): cursor type displayed when mouse hovers the slice. [default: `normal`]
 - `marker` (string): legend marker. Available options are `rect`, `circle` & `ellipse`. [default: `circle`]
 - `evolution` (boolean): whether or not to animate rendering slice by slice. [default: `false`]
-- `gradient` (object literal): use color gradient to fill each slice [default: `false`]
+- `gradient` (object literal): use color gradient to fill each slice [default: no gradient]
     - `gradient.darkness` (integer): `color` darkness level between (incl.) 0-100 [default: `0`]
     - `gradient.lightness` (integer): `color` lightness level between (incl.) 0-100 [default: `0`]
     - `gradient.degrees` (integer): gradient direction angle [default: `180`]
-- `threeD` (object literal): generate 3D pie chart. Not available for donut [default: `false`]
+- `threeD` (object literal): generate 3D pie chart. Not available for donut [default: 2D chart]
     - `threeD.height` (integer) the height of 3D pie (the Z dimension)
-- `legend` (object literal): generate chart legend [default: `false`]
+- `legend` (object literal): generate chart legend [default: no legend]
     - `legend.labels` (array): array of strings that will be used in a pie legend
     - `legend.x` (integer): x origin coordinate of the legend [default: `chart X + radius + 30`]
     - `legend.y` (integer): y origin coordinate of the legend [default: `chart Y - radius`]
     - `legend.fontFamily` (string): legend font type. [default: `Arial`]
     - `legend.fontSize` (string): legend font size. [default: `14`]
-- `donut` (object literal): turn pie into donut chart. Not available in 3D [default: `false`]
+- `donut` (object literal): turn pie into donut chart. Not available in 3D [default: pie chart]
     - `donut.diameter` (float): between 0.1 - 0.9. Determines the donut thickness [default: `0.5`]
 - `easing` (string): slice hover effect. [default: no hover effect]. Available options are:
     - `shift-fast`: pie slice shifts away from the pie center [see Screenshots](#screenshots)
