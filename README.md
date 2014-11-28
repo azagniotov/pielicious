@@ -1,7 +1,8 @@
 Raphaël Donut Pie Chart library
 =========
 
-Based on Raphaël JS (cross-browser JavaScript library that draws scalable vector graphics) by Dmitry Baranovskiy (http://raphaeljs.com). 
+Based on Raphaël JS (cross-browser JavaScript library that draws scalable vector graphics) by Dmitry Baranovskiy (http://raphaeljs.com).
+The library can generate 2D & 3D charts. Various configuration options available for better user experience.
 
 How to Use
 ==========
@@ -24,37 +25,25 @@ Object of Raphaël elements: `{slices: [array], markers: [array], descriptions: 
 ### Usage Example
 ```
 var paper = new Raphael("canvas", 500, 500);
-var pie = paper.donutpiechart(cx, cy, r, opts);
+var pie = paper.donutpiechart(150, 150, 100, {
+    data: data,
+    colors: colors,
+    titles: titles,
+    handles: handles,
+    gradient: {darkness: 12, lightness: 9, degrees: 180},
+    cursor: "pointer",
+    marker: "rect",
+    threeD: {height: 30},
+    donut: {diameter: 0.4},
+    legend: {labels: labels, x: 290, y: 90, fontSize: 14, fontFamily: "Verdana"},
+    evolution: true,
+    easing: "shift-fast"
+});
 ```
 
 ### Pie Options
-- `data` (array): values used to plot
-- `colors` (array): array of string colors used to plot each value pie slice
-- `gradient` (boolean): whether or not to fill pie slices by generating gradient from each `colors` [default: `false`]
-- `tilt2d` (boolean): whether or not to render pie/donut chart using tilted angle [default: `false`]
-- `hoverTitles` (array): array of strings representing tooltip texts when mouse hovers each pie slice
-- `sliceHandles` (array): array of strings assigned to each pie slice, legend marker & legend label 
-- `hrefs` (array): string urls to set up clicks on pie slices
-- `legendLabels` (array): array of strings that will be used in a pie legend
-- `legendXstart` (integer): x coordinate of the legend
-- `legendYstart` (integer): y coordinate of the legend
-- `cursor` (string): cursor type displayed when mouse hovers the slice. [default: `normal`]
-- `marker` (string): legend marker. Available options are `rect`, `circle` & `ellipse`. [default: `circle`]
-- `fontFamily` (string): legend font type. [default: `Arial`]
-- `fontSize` (string): legend font size. [default: `14`]
-- `donut` (object): if set, the pie will turn to donut chart. Not available in 3D [default: `false`]
-    - {
-        diameter (float): between 0.1 - 0.9. Determines the donut thickness [default: `0.5`]
-    }
-- `exploded` (boolean): whether or not to render the pie slices exploded. [default: `false`]
-- `growingOnLoad` (boolean): whether or not to animate rendering slice by slice. [default: `false`]
-- `sliceHoverEffect` (string): slice hover effect. [default: no hover effect]. Available options are:
-  - `shift-fast`: pie slice shifts away from the pie center [see Screenshots](#screenshots)
-  - `shift-slow`: same as `shift-fast`, but slower.
-  - `shift-bounce`: same as `shift-fast`. When mouse leaves the slice, the slice bounces back inside the pie
-  - `scale`: pie slice scales up
-  - `scale-bounce`: same as above. When mouse leaves the slice, the slice bounces to normal size
-  - `outline`: outline appears near the outer slice edge [see Screenshots](#screenshots)
+
+Coming very VERY SOON!
 
 ##### Screenshots
 ![Pie](screenshots/pie.png?raw=true) Pie
@@ -72,12 +61,16 @@ var pie = paper.donutpiechart(cx, cy, r, opts);
 Raphaël v2.1.2
 
 ### Dependencies
-Raphaël JS. There is no need for G Raphaël JS
+Raphaël JS ONLY. There is no need for g.Raphaël JS library
 
 Changelog
 ---------
 
+**v2.0**
+
+ * Added 3D support
+ * Minor cosmetic changes, overall code cleanup
+
 **v1.0**
 
  * Initial version
- 

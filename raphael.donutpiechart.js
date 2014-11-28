@@ -438,34 +438,35 @@
         function renderChartLegend(bucket) {
             var label = bucket.label,
                 color = bucket.color;
-            if (label !== "") {
-                legendLabelYstart += 10;
-                var radius = 9,
-                    markerElement = null,
-                    markerAttrs = {"title": label, "fill": color, "fill-rule": "nonzero", "stroke": WHITE_COLOR, "stroke-width": "0.1", "cursor": cursor};
-                if (marker === "rect") {
-                    markerElement = paper.path("M " + legendXstart + ", " + legendYstart + " l 28,0  0,16  -28,0  0,-16z");
-                } else if (marker === "circle") {
-                    markerElement = paper.circle(legendXstart + (2 * radius), legendYstart + radius, radius);
-                } else if (marker === "ellipse") {
-                    radius = 10;
-                    markerElement = paper.ellipse(legendXstart + (2 * radius), legendYstart + radius, 1.25 * radius, radius * 0.75);
-                }
-
-                if (markerElement != null) {
-                    markerElement.attr(markerAttrs);
-                    markerElement.handle = bucket.handle;
-                    markers.push(markerElement);
-                }
-
-                var text = paper.text(legendLabelXstart, legendLabelYstart, label);
-                text.attr({"title": label, "font-family": fontFamily, "font-weight": "normal", "fill": "#474747", "cursor": cursor, "font-size": fontSize, "text-anchor": "start"});
-                text.handle = bucket.handle;
-                descriptions.push(text);
-
-                legendYstart += 30;
-                legendLabelYstart = legendYstart;
+            if (label === "") {
+                return;
             }
+            legendLabelYstart += 10;
+            var radius = 9,
+                markerElement = null,
+                markerAttrs = {"title": label, "fill": color, "fill-rule": "nonzero", "stroke": WHITE_COLOR, "stroke-width": "0.1", "cursor": cursor};
+            if (marker === "rect") {
+                markerElement = paper.path("M " + legendXstart + ", " + legendYstart + " l 28,0  0,16  -28,0  0,-16z");
+            } else if (marker === "circle") {
+                markerElement = paper.circle(legendXstart + (2 * radius), legendYstart + radius, radius);
+            } else if (marker === "ellipse") {
+                radius = 10;
+                markerElement = paper.ellipse(legendXstart + (2 * radius), legendYstart + radius, 1.25 * radius, radius * 0.75);
+            }
+
+            if (markerElement != null) {
+                markerElement.attr(markerAttrs);
+                markerElement.handle = bucket.handle;
+                markers.push(markerElement);
+            }
+
+            var text = paper.text(legendLabelXstart, legendLabelYstart, label);
+            text.attr({"title": label, "font-family": fontFamily, "font-weight": "normal", "fill": "#474747", "cursor": cursor, "font-size": fontSize, "text-anchor": "start"});
+            text.handle = bucket.handle;
+            descriptions.push(text);
+
+            legendYstart += 30;
+            legendLabelYstart = legendYstart;
         }
 
         function fill(color) {
