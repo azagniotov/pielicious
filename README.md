@@ -26,10 +26,11 @@ Object of Raphaël elements: `{slices: [array], markers: [array], descriptions: 
 ```
 var paper = new Raphael("canvas", 500, 500);
 var pie = paper.donutpiechart(150, 150, 100, {
-    data: data,
-    colors: colors,
-    titles: titles,
-    handles: handles,
+    data: [23, 56, 78],
+    colors: ['red', '#edf234', 'rgb(233, 145, 68)'],
+    titles: ['apples', 'oranges', 'pear'],
+    handles: ['apple_slice', 'orange_slice', 'pear_slice'],
+    hrefs: ['http://google.com', 'http://apple.com', 'http://yahoo.com'],
     gradient: {darkness: 12, lightness: 9, degrees: 180},
     cursor: "pointer",
     marker: "rect",

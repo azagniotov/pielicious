@@ -4,19 +4,22 @@
  * http://stackoverflow.com/questions/3326650/console-is-undefined-error-for-internet-explorer
  */
 (function () {
-    if (!window.console) {
-        window.console = {};
-    }
+    "use strict";
+    /*global window, Raphael, console */
     // union of Chrome, FF, IE, and Safari console methods
     var m = [
         "log", "info", "warn", "error", "debug", "trace", "dir", "group",
         "groupCollapsed", "groupEnd", "time", "timeEnd", "profile", "profileEnd",
         "dirxml", "assert", "count", "markTimeline", "timeStamp", "clear"
-    ];
+    ], index;
+
+    if (window && !window.console) {
+        window.console = {};
+    }
     // define undefined methods as no-ops to prevent errors
-    for (var i = 0; i < m.length; i++) {
-        if (!window.console[m[i]]) {
-            window.console[m[i]] = function () {
+    for (index = 0; index < m.length; index += 1) {
+        if (!window.console[m[index]]) {
+            window.console[m[index]] = function () {
             };
         }
     }
@@ -29,9 +32,12 @@
  * Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) license.
  */
 (function () {
+    "use strict";
+
     function DonutPieChart(paper, cx, cy, R1, opts) {
         opts = opts || {};
-        var RADIAN = (Math.PI / 180),
+        var customAttribs = paper.customAttributes || {},
+            RADIAN = (Math.PI / 180),
             WHITE_COLOR = "#ffffff",
             BOUNCE_EFFECT_NAME = "bounce",
             BACKOUT_EFFECT_NAME = "backOut",
@@ -67,55 +73,169 @@
             slices = paper.set(),
             markers = paper.set(),
             descriptions = paper.set(),
-            _index,
-            bucket = [];
+            index,
+            bucket = [],
+            startX = cx,
+            startY = cy,
+            endAngle = 0,
+            timeout,
+            Animator = function Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn) {
+                if (!(this instanceof Animator)) {
+                    return new Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn);
+                }
+                this.bucket = bucket;
+                this.threeD = threeD;
+                this.slice = bucket.slice;
+                this.arc = bucket.arc;
+                this.wallOne = bucket.wallOne;
+                this.wallTwo = bucket.wallTwo;
+                this.sliceAnimationOut = sliceAnimationOut;
+                this.sliceAnimationIn = sliceAnimationIn;
+                this.bordersAnimationOut = bordersAnimationOut;
+                this.bordersAnimationIn = bordersAnimationIn;
+            },
+            PieColor = function PieColor(color, gradientAngle) {
+                if (!(this instanceof PieColor)) {
+                    return new PieColor(color, gradientAngle);
+                }
+                this.gradientAngle = gradientAngle;
+                this.rgb = Raphael.getRGB(color);
+            };
 
-        for (_index = 0; _index < data.length; _index++) {
-            total += data[_index];
-        }
+        Animator.prototype = {
+            bind: function () {
+                var self = this,
+                    sliceMouseOverHandler = function () {
+                        self.slice.stop();
+                        self.slice.animate(self.sliceAnimationOut);
+                        if (self.threeD) {
+                            self.arc.stop();
+                            self.wallOne.stop();
+                            self.wallTwo.stop();
+                            self.arc.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.arc);
+                            self.wallOne.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.wallOne);
+                            self.wallTwo.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.wallTwo);
 
-        for (_index = 0; _index < data.length; _index++) {
-            bucket[_index] = {};
+                            if (self.bucket.startAngle >= 0 && self.bucket.startAngle < 180) {
+                                self.arc.toFront();
+                                self.slice.toFront();
+                            } else {
+                                self.arc.toBack();
+                            }
+                        }
+                    },
+                    sliceMouseOutHandler = function () {
+                        self.slice.animate(self.sliceAnimationIn);
+                        if (self.threeD) {
+                            self.arc.animateWith(self.slice, self.sliceAnimationIn, self.bordersAnimationIn.arc);
+                            self.wallOne.animateWith(self.slice, self.sliceAnimationIn, self.bordersAnimationIn.wallOne);
+                            self.wallTwo.animateWith(self.slice, self.sliceAnimationIn, self.bordersAnimationIn.wallTwo);
+                        }
+                    };
 
-            var startX = cx, startY = cy,
-                value = data[_index] || 0,
-                color = colors[_index] || "#FF0000",
-                label = legendLabels[_index] || "",
-                title = titles[_index] || "",
-                href = hrefs[_index] || "",
-                handle = handles[_index] || "",
-                sliceAngle = 360 * value / total,
-                endAngle = (_index === 0 ? 0 : endAngle),
-                startAngle = endAngle,
-                endAngle = startAngle + sliceAngle,
-                shiftX = startX + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * RADIAN),
-                shiftY = startY + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * RADIAN);
-
-            bucket[_index].color = color;
-            bucket[_index].label = label;
-            bucket[_index].title = title;
-            bucket[_index].href = href;
-            bucket[_index].handle = handle;
-            bucket[_index].startAngle = startAngle;
-            bucket[_index].endAngle = endAngle;
-            bucket[_index].startX = startX;
-            bucket[_index].startY = startY;
-            bucket[_index].shiftX = shiftX;
-            bucket[_index].shiftY = shiftY;
-            bucket[_index].sliceOrigin = [startX, startY, R1, startAngle, endAngle];
-            bucket[_index].sliceOriginZero = [startX, startY, R1, 0, 0];
-
-            if (threeD) {
-                bucket[_index].arcOrigin = bucket[_index].sliceOrigin;
-                bucket[_index].wallOneOrigin = [startX, startY, R1, startAngle];
-                bucket[_index].wallTwoOrigin = [startX, startY, R1, endAngle];
-                bucket[_index].arcOriginZero = bucket[_index].sliceOriginZero;
-                bucket[_index].wallOneOriginZero = [startX, startY, R1, 0];
-                bucket[_index].wallTwoOriginZero = [startX, startY, R1, 0];
+                this.slice.mouseover(sliceMouseOverHandler);
+                this.slice.mouseout(sliceMouseOutHandler);
+                if (self.threeD) {
+                    this.arc.mouseover(sliceMouseOverHandler);
+                    this.arc.mouseout(sliceMouseOutHandler);
+                }
             }
+        };
+
+        // Adopted from https://bgrins.github.io/TinyColor/
+        PieColor.prototype = {
+            toHsl: function () {
+                var r = this.rgb.r / 255,
+                    g = this.rgb.g / 255,
+                    b = this.rgb.b / 255,
+                    max = Math.max(r, g, b),
+                    min = Math.min(r, g, b),
+                    h,
+                    s,
+                    l = (max + min) / 2,
+                    d = max - min;
+
+                if (max === min) {
+                    h = s = 0; // achromatic
+                } else {
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case r:
+                            h = (g - b) / d + (g < b ? 6 : 0);
+                            break;
+                        case g:
+                            h = (b - r) / d + 2;
+                            break;
+                        case b:
+                            h = (r - g) / d + 4;
+                            break;
+                    }
+                    h /= 6;
+                }
+                return {h: h, s: s, l: l};
+            },
+
+            lighten: function (amount) {
+                amount = (amount === 0 || amount < 0) ? 0 : (amount || 10);
+                var hsl = this.toHsl();
+                hsl.l += amount / 100;
+                hsl.l = Math.min(1, Math.max(0, hsl.l));
+
+                return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l);
+            },
+
+            darken: function (amount) {
+                amount = (amount === 0 || amount < 0) ? 0 : (amount || 10);
+                var hsl = this.toHsl();
+                hsl.l -= amount / 100;
+                hsl.l = Math.min(1, Math.max(0, hsl.l));
+
+                return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l);
+            },
+
+            gradient: function (darkAmount, lightAmount) {
+                return this.gradientAngle + "-" + this.darken(darkAmount) + "-" + this.lighten(lightAmount);
+            }
+        };
+
+        function calculateX(startX, R, angle) {
+            return startX + R * Math.cos(angle * RADIAN);
         }
 
-        paper.customAttributes.slice = function (startX, startY, R1, startAngle, endAngle) {
+        function calculateAngledX(startX, R, startAngle, endAngle) {
+            return startX + R * Math.cos((startAngle + (endAngle - startAngle)) * RADIAN);
+        }
+
+        function calculateY(startY, R, angle) {
+            return startY + R * Math.sin(angle * RADIAN);
+        }
+
+        function calculateAngledY(startY, R, startAngle, endAngle) {
+            return startY + R * Math.sin((startAngle + (endAngle - startAngle)) * RADIAN);
+        }
+
+        function fill(color) {
+            if (!gradient) {
+                return color;
+            }
+            return new PieColor(color, gradientDegrees).gradient(gradientDarkness, gradientLightness);
+        }
+
+        function attr(shape, bucket, data) {
+            var baseAttr = {
+                "stroke": WHITE_COLOR,
+                "stroke-width": 1.5,
+                "stroke-linejoin": "round",
+                "fill": fill(bucket.color),
+                "title": bucket.title,
+                "cursor": cursor
+            };
+            baseAttr[shape] = data;
+
+            return baseAttr;
+        }
+
+        customAttribs.slice = function (startX, startY, R1, startAngle, endAngle) {
 
             if (startAngle === 0 && endAngle === 0) {
                 return [];
@@ -142,27 +262,29 @@
                         ["L", x1end, y1end ],
                         ["A", R1, R2, 0, +largeArcFlag, 1, x2end, y2end ],
                         ["L", x2start, y2start ],
-                        ["A", innerR1, innerR2, 0, +(largeArcFlag), 0, x1start, y1start ],
-                        ["Z"]
-                    ]
-                };
-            } else {
-                return {
-                    path: [
-                        ["M", startX, startY ],
-                        ["L", x1end, y1end ],
-                        ["A", R1, R2, 0, +largeArcFlag, sweepFlag, x2end, y2end ],
+                        ["A", innerR1, innerR2, 0, +largeArcFlag, 0, x1start, y1start ],
                         ["Z"]
                     ]
                 };
             }
-        }
 
-        paper.customAttributes.arc = function (startX, startY, R1, startAngle, endAngle) {
+            return {
+                path: [
+                    ["M", startX, startY ],
+                    ["L", x1end, y1end ],
+                    ["A", R1, R2, 0, +largeArcFlag, sweepFlag, x2end, y2end ],
+                    ["Z"]
+                ]
+            };
+        };
+
+        customAttribs.arc = function (startX, startY, R1, startAngle, endAngle) {
 
             if (startAngle === 0 && endAngle === 0) {
                 return [];
-            } else if (startAngle < 180 && endAngle > 180) {
+            }
+
+            if (startAngle < 180 && endAngle > 180) {
                 // do not draw arced border if it finishes beyinhg the 180 degree, ie.: do not draw not visible arc
                 endAngle = 180;
             }
@@ -188,9 +310,9 @@
                     ["Z"]
                 ]
             };
-        }
+        };
 
-        paper.customAttributes.outline = function (startX, startY, R1, startAngle, endAngle) {
+        customAttribs.outline = function (startX, startY, R1, startAngle, endAngle) {
             var innerR1 = R1 + (threeD ? 3 : 1),
                 innerR2 = (threeD ? innerR1 / 2 : innerR1),
                 outerR1 = innerR1 + (threeD ? 14 : 10),
@@ -211,13 +333,13 @@
                     ["L", x1end, y1end ],
                     ["A", outerR1, outerR2, 0, +flag, 1, x2end, y2end ],
                     ["L", x2start, y2start ],
-                    ["A", innerR1, innerR2, 0, +(flag), 0, x1start, y1start ],
+                    ["A", innerR1, innerR2, 0, +flag, 0, x1start, y1start ],
                     ["Z"]
                 ]
-            }
+            };
         };
 
-        paper.customAttributes.wall = function (startX, startY, R1, angle) {
+        customAttribs.wall = function (startX, startY, R1, angle) {
             if (angle === 0) {
                 return [];
             }
@@ -235,95 +357,7 @@
                     ["Z"]
                 ]
             };
-        }
-
-        function calculateX(startX, R, angle) {
-            return startX + R * Math.cos(angle * RADIAN);
-        }
-
-        function calculateAngledX(startX, R, startAngle, endAngle) {
-            return startX + R * Math.cos((startAngle + (endAngle - startAngle)) * RADIAN);
-        }
-
-        function calculateY(startY, R, angle) {
-            return startY + R * Math.sin(angle * RADIAN);
-        }
-
-        function calculateAngledY(startY, R, startAngle, endAngle) {
-            return startY + R * Math.sin((startAngle + (endAngle - startAngle)) * RADIAN);
-        }
-
-        for (_index = 0; _index < data.length; _index++) {
-            var obj = bucket[_index];
-            var grow = evolution === true;
-            if (threeD) {
-                bucket[_index].wallOne = paper.path().attr(attr("wall", obj, (grow ? obj.wallOneOriginZero : obj.wallOneOrigin)));
-                bucket[_index].wallTwo = paper.path().attr(attr("wall", obj, (grow ? obj.wallTwoOriginZero : obj.wallTwoOrigin)));
-                bucket[_index].arc = paper.path().attr(attr("arc", obj, (grow ? obj.arcOriginZero : obj.arcOrigin)));
-            }
-            bucket[_index].slice = paper.path().attr(attr("slice", obj, (grow ? obj.sliceOriginZero : obj.sliceOrigin)));
-            bucket[_index].slice.handle = bucket[_index].handle;
-            if (easing.indexOf("outline") !== -1) {
-                var outline = paper.path().attr(attr("outline", obj, bucket[_index].sliceOrigin));
-                bucket[_index].slice.outline = outline;
-                outline.hide();
-            }
-            slices.push(bucket[_index].slice);
-
-            bindEffectHandlers(bucket[_index]);
-            renderChartLegend(bucket[_index]);
-        }
-
-        if (threeD) {
-            for (_index = 0; _index < data.length; _index++) {
-                var obj = bucket[_index];
-                if (obj.startAngle >= 90 && obj.startAngle < 270) {
-                    // the following order is important
-                    bucket[_index].wallOne.toBack();
-                    bucket[_index].wallTwo.toBack();
-                } else if (obj.endAngle > 270 && obj.endAngle <= 360) {
-                    bucket[_index].wallOne.toBack();
-                } else if (obj.endAngle > 0 && obj.endAngle < 90) {
-                    bucket[_index].wallTwo.toFront();
-                }
-
-                if (obj.startAngle >= 0 && obj.startAngle < 180) {
-                    bucket[_index].arc.toFront();
-                } else {
-                    bucket[_index].arc.toBack();
-                }
-                bucket[_index].slice.toFront();
-            }
-        }
-
-        function attr(shape, bucket, data) {
-            var baseAttr = {
-                "stroke": WHITE_COLOR,
-                "stroke-width": 1.5,
-                "stroke-linejoin": "round",
-                "fill": fill(bucket.color),
-                "title": bucket.title,
-                "cursor": cursor};
-            baseAttr[shape] = data;
-
-            return baseAttr;
-        }
-
-        if (evolution) {
-            var timeout = setTimeout(function () {
-
-                for (_index = 0; _index < bucket.length; _index++) {
-                    bucket[_index].slice.animate({slice: bucket[_index].sliceOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-
-                    if (threeD) {
-                        bucket[_index].arc.animate({arc: bucket[_index].arcOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-                        bucket[_index].wallOne.animate({wall: bucket[_index].wallOneOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-                        bucket[_index].wallTwo.animate({wall: bucket[_index].wallTwoOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-                    }
-                }
-                clearTimeout(timeout);
-            }, 200);
-        }
+        };
 
         function bindEffectHandlers(bucket) {
             var shortAnimationDelay = animationDelay / 4,
@@ -331,13 +365,13 @@
                 startCoordinates = [bucket.startX, bucket.startY, R1, bucket.startAngle, bucket.endAngle],
                 scaleOut = {transform: "s1.1 1.1 " + startX + " " + startY},
                 scaleNormal = {transform: "s1 1 " + startX + " " + startY},
-                transformOut = {transform: "T" + (bucket.shiftX - cx) + "," + (bucket.shiftY - cy)},
-                transformNormal = {transform: "T" + 0 + "," + 0};
+                transformOut = {transform: "T" + (bucket.shiftX - cx) + ", " + (bucket.shiftY - cy)},
+                transformNormal = {transform: "T 0, 0"},
+                shiftOut = Raphael.animation(transformOut, shortAnimationDelay),
+                shiftIn = Raphael.animation(transformNormal, shortAnimationDelay);
 
             if (easing === "shift-fast") {
-                var shiftOut = Raphael.animation(transformOut, shortAnimationDelay);
-                var shiftIn = Raphael.animation(transformNormal, shortAnimationDelay);
-                Animator(bucket, threeD, shiftOut, shiftIn,
+                new Animator(bucket, threeD, shiftOut, shiftIn,
                     {
                         arc: shiftOut,
                         wallOne: shiftOut,
@@ -350,9 +384,9 @@
                     }).bind();
 
             } else if (easing === ELASTIC_EFFECT_NAME) {
-                var shiftOut = Raphael.animation(transformOut, animationDelay, ELASTIC_EFFECT_NAME);
-                var shiftIn = Raphael.animation(transformNormal, animationDelay, ELASTIC_EFFECT_NAME);
-                Animator(bucket, threeD, shiftOut, shiftIn,
+                shiftOut = Raphael.animation(transformOut, animationDelay, ELASTIC_EFFECT_NAME);
+                shiftIn = Raphael.animation(transformNormal, animationDelay, ELASTIC_EFFECT_NAME);
+                new Animator(bucket, threeD, shiftOut, shiftIn,
                     {
                         arc: shiftOut,
                         wallOne: shiftOut,
@@ -365,9 +399,9 @@
                     }).bind();
 
             } else if (easing === "shift-slow") {
-                var shiftOut = Raphael.animation(transformOut, animationDelay);
-                var shiftIn = Raphael.animation(transformNormal, animationDelay);
-                Animator(bucket, threeD, shiftOut, shiftIn,
+                shiftOut = Raphael.animation(transformOut, animationDelay);
+                shiftIn = Raphael.animation(transformNormal, animationDelay);
+                new Animator(bucket, threeD, shiftOut, shiftIn,
                     {
                         arc: shiftOut,
                         wallOne: shiftOut,
@@ -380,7 +414,7 @@
                     }).bind();
 
             } else if (easing === "shift-bounce") {
-                Animator(bucket, threeD,
+                new Animator(bucket, threeD,
                     Raphael.animation({slice: shiftOutCoordinates}, shortAnimationDelay),
                     Raphael.animation({slice: startCoordinates}, animationDelay, BOUNCE_EFFECT_NAME),
                     {
@@ -393,8 +427,8 @@
                         wallOne: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.startAngle]}, animationDelay, BOUNCE_EFFECT_NAME),
                         wallTwo: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.endAngle]}, animationDelay, BOUNCE_EFFECT_NAME)
                     }).bind();
-            } else if (easing === "scale") {                  3
-                Animator(bucket, threeD,
+            } else if (easing === "scale") {
+                new Animator(bucket, threeD,
                     scaleOut,
                     scaleNormal,
                     {
@@ -408,7 +442,7 @@
                         wallTwo: scaleNormal
                     }).bind();
             } else if (easing === "scale-bounce") {
-                Animator(bucket, threeD,
+                new Animator(bucket, threeD,
                     scaleOut,
                     Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME),
                     {
@@ -436,15 +470,15 @@
         }
 
         function renderChartLegend(bucket) {
-            var label = bucket.label,
-                color = bucket.color;
-            if (label === "") {
+            if (bucket.label === "") {
                 return;
             }
             legendLabelYstart += 10;
-            var radius = 9,
+            var text,
+                radius = 9,
                 markerElement = null,
-                markerAttrs = {"title": label, "fill": color, "fill-rule": "nonzero", "stroke": WHITE_COLOR, "stroke-width": "0.1", "cursor": cursor};
+                markerAttrs = {"title": bucket.label, "fill": bucket.color, "fill-rule": "nonzero", "stroke": WHITE_COLOR, "stroke-width": "0.1", "cursor": cursor};
+
             if (marker === "rect") {
                 markerElement = paper.path("M " + legendXstart + ", " + legendYstart + " l 28,0  0,16  -28,0  0,-16z");
             } else if (marker === "circle") {
@@ -454,14 +488,14 @@
                 markerElement = paper.ellipse(legendXstart + (2 * radius), legendYstart + radius, 1.25 * radius, radius * 0.75);
             }
 
-            if (markerElement != null) {
+            if (markerElement) {
                 markerElement.attr(markerAttrs);
                 markerElement.handle = bucket.handle;
                 markers.push(markerElement);
             }
 
-            var text = paper.text(legendLabelXstart, legendLabelYstart, label);
-            text.attr({"title": label, "font-family": fontFamily, "font-weight": "normal", "fill": "#474747", "cursor": cursor, "font-size": fontSize, "text-anchor": "start"});
+            text = paper.text(legendLabelXstart, legendLabelYstart, bucket.label);
+            text.attr({"title": bucket.label, "font-family": fontFamily, "font-weight": "normal", "fill": "#474747", "cursor": cursor, "font-size": fontSize, "text-anchor": "start"});
             text.handle = bucket.handle;
             descriptions.push(text);
 
@@ -469,138 +503,110 @@
             legendLabelYstart = legendYstart;
         }
 
-        function fill(color) {
-            if (!gradient) {
-                return color;
-            } else {
-                return PieColor(color, gradientDegrees).gradient(gradientDarkness, gradientLightness);
+        for (index = 0; index < data.length; index += 1) {
+            total += data[index];
+        }
+
+        for (index = 0; index < data.length; index += 1) {
+            bucket[index] = {};
+
+            var value = data[index] || 0,
+                color = colors[index] || "#FF0000",
+                label = legendLabels[index] || "",
+                title = titles[index] || "",
+                href = hrefs[index] || "",
+                handle = handles[index] || "",
+                sliceAngle = 360 * value / total,
+                startAngle = endAngle,
+                endAngle = startAngle + sliceAngle,
+                shiftX = startX + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * RADIAN),
+                shiftY = startY + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * RADIAN);
+
+            bucket[index].color = color;
+            bucket[index].label = label;
+            bucket[index].title = title;
+            bucket[index].href = href;
+            bucket[index].handle = handle;
+            bucket[index].startAngle = startAngle;
+            bucket[index].endAngle = endAngle;
+            bucket[index].startX = startX;
+            bucket[index].startY = startY;
+            bucket[index].shiftX = shiftX;
+            bucket[index].shiftY = shiftY;
+            bucket[index].sliceOrigin = [startX, startY, R1, startAngle, endAngle];
+            bucket[index].sliceOriginZero = [startX, startY, R1, 0, 0];
+
+            if (threeD) {
+                bucket[index].arcOrigin = bucket[index].sliceOrigin;
+                bucket[index].wallOneOrigin = [startX, startY, R1, startAngle];
+                bucket[index].wallTwoOrigin = [startX, startY, R1, endAngle];
+                bucket[index].arcOriginZero = bucket[index].sliceOriginZero;
+                bucket[index].wallOneOriginZero = [startX, startY, R1, 0];
+                bucket[index].wallTwoOriginZero = [startX, startY, R1, 0];
             }
+        }
+
+        for (index = 0; index < data.length; index += 1) {
+            var obj = bucket[index];
+            if (threeD) {
+                bucket[index].wallOne = paper.path().attr(attr("wall", obj, (evolution ? obj.wallOneOriginZero : obj.wallOneOrigin)));
+                bucket[index].wallTwo = paper.path().attr(attr("wall", obj, (evolution ? obj.wallTwoOriginZero : obj.wallTwoOrigin)));
+                bucket[index].arc = paper.path().attr(attr("arc", obj, (evolution ? obj.arcOriginZero : obj.arcOrigin)));
+            }
+            bucket[index].slice = paper.path().attr(attr("slice", obj, (evolution ? obj.sliceOriginZero : obj.sliceOrigin)));
+            bucket[index].slice.handle = bucket[index].handle;
+            if (easing.indexOf("outline") !== -1) {
+                var outline = paper.path().attr(attr("outline", obj, bucket[index].sliceOrigin));
+                bucket[index].slice.outline = outline;
+                outline.hide();
+            }
+            slices.push(bucket[index].slice);
+
+            bindEffectHandlers(bucket[index]);
+            renderChartLegend(bucket[index]);
+        }
+
+        if (threeD) {
+            for (index = 0; index < data.length; index += 1) {
+                var obj = bucket[index];
+                if (obj.startAngle >= 90 && obj.startAngle < 270) {
+                    // the following order is important
+                    bucket[index].wallOne.toBack();
+                    bucket[index].wallTwo.toBack();
+                } else if (obj.endAngle > 270 && obj.endAngle <= 360) {
+                    bucket[index].wallOne.toBack();
+                } else if (obj.endAngle > 0 && obj.endAngle < 90) {
+                    bucket[index].wallTwo.toFront();
+                }
+
+                if (obj.startAngle >= 0 && obj.startAngle < 180) {
+                    bucket[index].arc.toFront();
+                } else {
+                    bucket[index].arc.toBack();
+                }
+                bucket[index].slice.toFront();
+            }
+        }
+
+        if (evolution) {
+            timeout = window.setTimeout(function () {
+                for (index = 0; index < bucket.length; index += 1) {
+                    bucket[index].slice.animate({slice: bucket[index].sliceOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+
+                    if (threeD) {
+                        bucket[index].arc.animate({arc: bucket[index].arcOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                        bucket[index].wallOne.animate({wall: bucket[index].wallOneOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                        bucket[index].wallTwo.animate({wall: bucket[index].wallTwoOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                    }
+                }
+                window.clearTimeout(timeout);
+            }, 200);
         }
 
         return {slices: slices.items, markers: markers.items, descriptions: descriptions.items};
-    };
-
-    var Animator = function Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn) {
-        if (!(this instanceof Animator)) {
-            return new Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn);
-        }
-        this._bucket = bucket;
-        this._threeD = threeD;
-        this._slice = bucket.slice;
-        this._arc = bucket.arc;
-        this._wallOne = bucket.wallOne;
-        this._wallTwo = bucket.wallTwo;
-        this._sliceAnimationOut = sliceAnimationOut;
-        this._sliceAnimationIn = sliceAnimationIn;
-        this._bordersAnimationOut = bordersAnimationOut;
-        this._bordersAnimationIn = bordersAnimationIn;
-    };
-
-    Animator.prototype = {
-        bind: function () {
-            var self = this;
-
-            var sliceMouseOverHandler = function () {
-                self._slice.stop();
-                self._slice.animate(self._sliceAnimationOut);
-                if (self._threeD) {
-                    self._arc.stop();
-                    self._wallOne.stop();
-                    self._wallTwo.stop();
-                    self._arc.animateWith(self._slice, self._sliceAnimationOut, self._bordersAnimationOut.arc);
-                    self._wallOne.animateWith(self._slice, self._sliceAnimationOut, self._bordersAnimationOut.wallOne);
-                    self._wallTwo.animateWith(self._slice, self._sliceAnimationOut, self._bordersAnimationOut.wallTwo);
-
-                    if (self._bucket.startAngle >= 0 && self._bucket.startAngle < 180) {
-                        self._arc.toFront();
-                        self._slice.toFront();
-                    } else {
-                        self._arc.toBack();
-                    }
-                }
-            };
-
-            var sliceMouseOutHandler = function () {
-                self._slice.animate(self._sliceAnimationIn);
-                if (self._threeD) {
-                    self._arc.animateWith(self._slice, self._sliceAnimationIn, self._bordersAnimationIn.arc);
-                    self._wallOne.animateWith(self._slice, self._sliceAnimationIn, self._bordersAnimationIn.wallOne);
-                    self._wallTwo.animateWith(self._slice, self._sliceAnimationIn, self._bordersAnimationIn.wallTwo);
-                }
-            };
-
-            this._slice.mouseover(sliceMouseOverHandler);
-            this._slice.mouseout(sliceMouseOutHandler);
-            if (self._threeD) {
-                this._arc.mouseover(sliceMouseOverHandler);
-                this._arc.mouseout(sliceMouseOutHandler);
-            }
-        }
-    }
-
-    var PieColor = function PieColor(color, gradientAngle) {
-        if (!(this instanceof PieColor)) {
-            return new PieColor(color, gradientAngle);
-        }
-        this._gradientAngle = gradientAngle;
-        this._rgb = Raphael.getRGB(color);
-    };
-
-    // Adopted from https://bgrins.github.io/TinyColor/
-    PieColor.prototype = {
-        toHsl: function () {
-            var r = this._rgb.r / 255,
-                g = this._rgb.g / 255,
-                b = this._rgb.b / 255,
-                max = Math.max(r, g, b),
-                min = Math.min(r, g, b),
-                h, s, l = (max + min) / 2;
-
-            if (max === min) {
-                h = s = 0; // achromatic
-            } else {
-                var d = max - min;
-                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                switch (max) {
-                    case r:
-                        h = (g - b) / d + (g < b ? 6 : 0);
-                        break;
-                    case g:
-                        h = (b - r) / d + 2;
-                        break;
-                    case b:
-                        h = (r - g) / d + 4;
-                        break;
-                }
-                h /= 6;
-            }
-            return {h: h, s: s, l: l};
-        },
-
-        lighten: function (amount) {
-            amount = (amount === 0 || amount < 0) ? 0 : (amount || 10);
-            var hsl = this.toHsl();
-            hsl.l += amount / 100;
-            hsl.l = Math.min(1, Math.max(0, hsl.l));
-
-            return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l)
-        },
-
-        darken: function (amount) {
-            amount = (amount === 0 || amount < 0) ? 0 : (amount || 10);
-            var hsl = this.toHsl();
-            hsl.l -= amount / 100;
-            hsl.l = Math.min(1, Math.max(0, hsl.l));
-
-            return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l)
-        },
-
-        gradient: function (darkAmount, lightAmount) {
-            return this._gradientAngle + "-" + this.darken(darkAmount) + "-" + this.lighten(lightAmount);
-        }
     }
 
     Raphael.fn.donutpiechart = function (cx, cy, R, opts) {
         return new DonutPieChart(this, cx, cy, R, opts);
-    }
+    };
 })();
