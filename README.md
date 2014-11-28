@@ -46,7 +46,7 @@ var pie = paper.donutpiechart(150, 150, 100, {
 - `data` (array): values used to plot
 - `colors` (array): array of string colors used to plot each value pie slice
 - `titles` (array): array of tooltip strings that pop up when the mouse hovers a slice
-- `handles` (array): array of handle strings assigned to Raphaël elements: each pie slice, legend marker & labels
+- `handles` (array): array of handle strings assigned to chart Raphaël elements
 - `hrefs` (array): string urls to set up clicks on pie slices
 - `cursor` (string): cursor type displayed when mouse hovers the slice. [default: `normal`]
 - `marker` (string): legend marker. Available options are `rect`, `circle` & `ellipse`. [default: `circle`]
@@ -68,10 +68,10 @@ var pie = paper.donutpiechart(150, 150, 100, {
 - `easing` (string): slice hover effect. [default: no hover effect]. Available options are:
     - `shift-fast`: pie slice shifts away from the pie center [see Screenshots](#screenshots)
     - `shift-slow`: same as `shift-fast`, but slower.
-    - `shift-bounce`: same as `shift-fast`. When mouse leaves the slice, the slice bounces back
+    - `shift-bounce`: same as `shift-fast`. When mouse exits, the slice bounces back
     - `scale`: pie slice scales up
+    - `scale-bounce`: same as above. When mouse exits, it bounces back to original size
     - `elastic`: pie slice shifts in & out like in elastic fashion
-    - `scale-bounce`: same as above. When mouse leaves the slice, the slice bounces to normal size
     - `outline`: outline appears near the outer slice edge [see Screenshots](#screenshots)
 
 ##### Screenshots
