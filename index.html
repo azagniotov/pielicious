@@ -68,7 +68,7 @@
     }
 
     var paper = new Raphael(document.getElementById("holder"), 500, 500),
-            pie = paper.donutpiechart(150, 150, 80, {
+            pie = paper.donutpiechart(150, 150, 100, {
                 data: data,
                 colors: colors,
                 //titles: titles,
@@ -80,7 +80,7 @@
                 donut: {diameter: 0.4},
                 legend: {labels: labels, x: 290, y: 90, fontSize: 14, fontFamily: "Verdana"},
                 evolution: true,
-                easing: "outline"
+                easing: "shift-bounce"
             });
 
 </script>
