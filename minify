@@ -1,0 +1,8 @@
+#!/bin/bash
+uglifyjs raphael.donutpiechart.js \
+--screw-ie8 \
+--output "raphael.donutpiechart.min.js" \
+--comments "all" \
+--lint \
+--verbose
+

@@ -1,6 +1,4 @@
 /**
- * Protect window.console method calls, e.g. console is not defined on IE
- * unless dev tools are open, and IE doesn't define console.debug
  * http://stackoverflow.com/questions/3326650/console-is-undefined-error-for-internet-explorer
  */
 (function () {
@@ -26,7 +24,7 @@
 })();
 
 /**
- * Donut-Pie Chart library v1.0, based on Raphaël JS by Dmitry Baranovskiy (http://raphaeljs.com)
+ * Donut-Pie Chart library, based on Raphaël JS by Dmitry Baranovskiy (http://raphaeljs.com)
  *
  * Copyright (c) 2014 Alexander Zagniotov
  * Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) license.
