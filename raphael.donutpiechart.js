@@ -27,7 +27,7 @@
  * Donut-Pie Chart library, based on Raphaël JS by Dmitry Baranovskiy (http://raphaeljs.com)
  *
  * Copyright (c) 2014 Alexander Zagniotov
- * Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) license.
+ * @license Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php) license.
  */
 (function () {
     "use strict";
@@ -608,3 +608,5 @@
         return new DonutPieChart(this, cx, cy, R, opts);
     };
 })();
+
+

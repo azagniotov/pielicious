@@ -2,7 +2,8 @@
 uglifyjs raphael.donutpiechart.js \
 --screw-ie8 \
 --output "raphael.donutpiechart.min.js" \
---comments "all" \
+--compress "if_return,unused,booleans,comparisons,dead_code,sequences" \
 --lint \
+--mangle \
 --verbose
 
