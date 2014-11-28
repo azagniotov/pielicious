@@ -1,7 +1,7 @@
 #!/bin/bash
-uglifyjs raphael.donutpiechart.js \
+uglifyjs pielicious.js \
 --screw-ie8 \
---output "raphael.donutpiechart.min.js" \
+--output "pielicious.min.js" \
 --compress "if_return,unused,booleans,comparisons,dead_code,sequences" \
 --lint \
 --mangle \

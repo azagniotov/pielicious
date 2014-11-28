@@ -1,10 +1,10 @@
 {
-    "name": "Raphael Donut-Pie Chart",
-    "description": "Raphaël Donut-Pie Chart library, based on Raphaël JS by Dmitry Baranovskiy.",
-    "homepage": "https://github.com/azagniotov/raphael-donut-pie-chart",
-    "main": "raphael.donutpiechart.js",
-    "version": "2.0",
-    "keywords": ["Raphael", "pie chart", "donut chart", "3d chart", "3d pie chart", "3d donut chart", "Raphael 3D pie chart", "Raphael 3D donut chart"],
+    "name": "pielicious",
+    "description": "Pielicious: donut-pie charting library, based on Raphaël JS by Dmitry Baranovskiy.",
+    "homepage": "https://github.com/azagniotov/pielicious",
+    "main": "pielicious.js",
+    "version": "2.1",
+    "keywords": ["Raphael", "pielicious", "svg charts", "pie chart", "donut chart", "3d chart", "3d pie chart", "3d donut chart", "Raphael 3D pie chart", "Raphael 3D donut chart"],
     "author": "Alexander Zagniotov <azagniotov@gmail.com>",
     "contributors": [],
     "dependencies": {
@@ -12,7 +12,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git@github.com:azagniotov/raphael-donut-pie-chart.git"
+        "url": "git@github.com:azagniotov/pielicious.git"
     },
     "license": "MIT"
 }

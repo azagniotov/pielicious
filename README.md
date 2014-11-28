@@ -1,14 +1,14 @@
-Raphaël Donut Pie Chart library
+Pielicious
 =========
 
 Based on Raphaël JS (cross-browser JavaScript library that draws scalable vector graphics) by Dmitry Baranovskiy (http://raphaeljs.com).
-The library can generate 2D & 3D charts. Various configuration options available for a better user experience.
+The library can generate 2D & 3D SVG charts. Various configuration options available for a better user experience.
 
 How to Use
 ==========
 
 ### Method
-Paper.donutpiechart(cx, cy, r, opts)
+Paper.pielicious(cx, cy, r, opts)
 
 ##### Method Parameters
  - cx (integer) x coordinate of the pie
@@ -25,7 +25,7 @@ Object of Raphaël elements: `{slices: [array], markers: [array], descriptions: 
 ### Usage Example
 ```
 var paper = new Raphael("canvas", 500, 500);
-var pie = paper.donutpiechart(150, 150, 100, {
+var pie = paper.pielicious(150, 150, 100, {
     data: [23, 56, 78],
     colors: ['red', '#edf234', 'rgb(233, 145, 68)'],
     titles: ['apples', 'oranges', 'pear'],
@@ -46,7 +46,7 @@ var pie = paper.donutpiechart(150, 150, 100, {
 - `data` (array): values used to plot
 - `colors` (array): array of string colors used to plot each value pie slice
 - `titles` (array): array of tooltip strings that pop up when the mouse hovers a slice
-- `handles` (array): array of handle strings assigned to chart Raphaël elements
+- `handles` (array): array of handle strings assigned to Raphaël elements of the chart
 - `hrefs` (array): string urls to set up clicks on pie slices
 - `cursor` (string): cursor type displayed when mouse hovers the slice. [default: `normal`]
 - `marker` (string): legend marker. Available options are `rect`, `circle` & `ellipse`. [default: `circle`]
@@ -95,6 +95,10 @@ Raphaël JS ONLY. There is no need for g.Raphaël JS library
 
 Changelog
 -----
+
+**v2.1**
+
+ * Renamed to 'pielicious'
 
 **v2.0**
 
