@@ -2,7 +2,7 @@ Raphaël Donut Pie Chart library
 =========
 
 Based on Raphaël JS (cross-browser JavaScript library that draws scalable vector graphics) by Dmitry Baranovskiy (http://raphaeljs.com).
-The library can generate 2D & 3D charts. Various configuration options available for better user experience.
+The library can generate 2D & 3D charts. Various configuration options available for a better user experience.
 
 How to Use
 ==========
