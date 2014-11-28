@@ -65,7 +65,7 @@
             marker = opts.marker || "circle",
             evolution = opts.evolution || false,
             easing = opts.easing || "",
-            shiftDistance = (threeD ? 20 : 15),
+            shiftDistance = (threeD ? 15 : 10),
             total = 0,
             animationDelay = 600,
             slices = paper.set(),
@@ -462,7 +462,7 @@
                 bucket.slice.mouseout(function () {
                     bucket.slice.outline.hide();
                 });
-            } else {
+            } else if (easing && easing !== "") {
                 console.error("Unknown hover effect name: " + easing);
             }
         }
