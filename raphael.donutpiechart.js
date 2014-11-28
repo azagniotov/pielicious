@@ -46,7 +46,7 @@
             gradient = (opts.gradient && typeof opts.gradient === 'object') || false,
             gradientDarkness = (gradient && opts.gradient.darkness ? opts.gradient.darkness : 0),
             gradientLightness = (gradient && opts.gradient.lightness ? opts.gradient.lightness : 0),
-            gradientDegrees = (gradient && opts.gradient.degrees ? Math.abs(opts.gradient.degrees) : 90),
+            gradientDegrees = (gradient && opts.gradient.degrees ? Math.abs(opts.gradient.degrees) : 180),
             colors = opts.colors || [],
             titles = opts.titles || [],
             handles = opts.handles || [],
