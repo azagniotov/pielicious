@@ -24,71 +24,64 @@
             CHUBU_REGION_COLOR = '#79efdb',
             KANTO_REGION_COLOR = '#87ef79',
             TOHOKU_REGION_COLOR = '#efe979',
-            HOKKAIDO_REGION_COLOR = '#ef7979';
-
-    var INDEX_TO_REGION_NAME = {
-        0: KYUSHU_REGION,
-        1: CHUGOKU_REGION,
-        2: SHIKOKU_REGION,
-        3: KANSAI_REGION,
-        4: CHUBU_REGION,
-        5: KANTO_REGION,
-        6: TOHOKU_REGION,
-        7: HOKKAIDO_REGION
-    };
-
-    var INDEX_TO_REGION_COLOR = {
-        0: KYUSHU_REGION_COLOR,
-        1: CHUGOKU_REGION_COLOR,
-        2: SHIKOKU_REGION_COLOR,
-        3: KANSAI_REGION_COLOR,
-        4: CHUBU_REGION_COLOR,
-        5: KANTO_REGION_COLOR,
-        6: TOHOKU_REGION_COLOR,
-        7: HOKKAIDO_REGION_COLOR
-    };
-    var INDEX_TO_REGION_VALUE = {
-        0: 35,
-        1: 118,
-        2: 29,
-        3: 228,
-        4: 253,
-        5: 51,
-        6: 242,
-        7: 19
-    };
-
-    var data = [];
-    var legendLabels = [];
-    var colors = [];
-    var hoverTitles = [];
-    var sliceHandles = [];
+            HOKKAIDO_REGION_COLOR = '#ef7979',
+            INDEX_TO_REGION_NAME = {
+                0: KYUSHU_REGION,
+                1: CHUGOKU_REGION,
+                2: SHIKOKU_REGION,
+                3: KANSAI_REGION,
+                4: CHUBU_REGION,
+                5: KANTO_REGION,
+                6: TOHOKU_REGION,
+                7: HOKKAIDO_REGION
+            },
+            INDEX_TO_REGION_COLOR = {
+                0: KYUSHU_REGION_COLOR,
+                1: CHUGOKU_REGION_COLOR,
+                2: SHIKOKU_REGION_COLOR,
+                3: KANSAI_REGION_COLOR,
+                4: CHUBU_REGION_COLOR,
+                5: KANTO_REGION_COLOR,
+                6: TOHOKU_REGION_COLOR,
+                7: HOKKAIDO_REGION_COLOR
+            },
+            INDEX_TO_REGION_VALUE = {
+                0: 35,
+                1: 118,
+                2: 29,
+                3: 228,
+                4: 253,
+                5: 51,
+                6: 242,
+                7: 19
+            },
+            data = [], labels = [], colors = [], titles = [], handles = [];
     for (var index in INDEX_TO_REGION_NAME) {
-        var value = INDEX_TO_REGION_VALUE[index];
-        var name = INDEX_TO_REGION_NAME[index];
-        var color = INDEX_TO_REGION_COLOR[index];
+        var value = INDEX_TO_REGION_VALUE[index],
+                name = INDEX_TO_REGION_NAME[index],
+                color = INDEX_TO_REGION_COLOR[index];
         data.push(value);
-        hoverTitles.push(name + " (" + value + ")");
+        titles.push(name + " (" + value + ")");
         colors.push(color);
-        sliceHandles.push(name);
-        legendLabels.push(name + " (" + value + ")");
+        handles.push(name);
+        labels.push(name + " (" + value + ")");
     }
 
-    var paper = new Raphael(document.getElementById("holder"), 500, 500);
-    var pie = paper.donutpiechart(150, 150, 100, {
-        data: data,
-        colors: colors,
-        hoverTitles: hoverTitles,
-        handles: sliceHandles,
-        gradient: true,
-        cursor: "pointer",
-        marker: "rect",
-        make3d: {height: 30},
-        donut: {diameter: 0.5},
-        legend: {labels: legendLabels, x: 290, y: 90, fontSize: 14, fontFamily: "Verdana"},
-        growingOnLoad: true,
-        sliceHoverEffect: "shift-bounce"
-    });
+    var paper = new Raphael(document.getElementById("holder"), 500, 500),
+            pie = paper.donutpiechart(150, 150, 100, {
+                data: data,
+                colors: colors,
+                titles: titles,
+                handles: handles,
+                gradient: {darkness: 12, lightness: 9, degrees: 180},
+                cursor: "pointer",
+                marker: "rect",
+                threeD: {height: 30},
+                donut: {diameter: 0.4},
+                legend: {labels: labels, x: 290, y: 90, fontSize: 14, fontFamily: "Verdana"},
+                evolution: true,
+                easing: "shift-fast"
+            });
 
 </script>
 </body>
