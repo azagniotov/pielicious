@@ -55,9 +55,11 @@
             handles = opts.handles || [],
             hrefs = opts.hrefs || [],
             threeD = (opts.threeD && typeof opts.threeD === 'object') || false,
-            size3d = (threeD && opts.threeD.height ? Math.abs(opts.threeD.height) : 25),
+            height3d = (threeD && opts.threeD.height ? (Math.abs(opts.threeD.height) > 100 ? 100 : Math.abs(opts.threeD.height)) : 25),
+            tilt3d = (threeD && opts.threeD.tilt ? (Math.abs(opts.threeD.tilt) > 0.9 ? 0.9 : Math.abs(opts.threeD.tilt)) : 0.5),
             donut = (opts.donut && typeof opts.donut === 'object') || false,
             donutDiameter = (donut && opts.donut.diameter ? (Math.abs(opts.donut.diameter) > 0.9 ? 0.9 : Math.abs(opts.donut.diameter)) : 0.5),
+            tiltDonut = (donut && opts.donut.tilt ? (Math.abs(opts.donut.tilt) > 0.9 ? 0.9 : Math.abs(opts.donut.tilt)) : 0.5),
             legend = (opts.legend && typeof opts.legend === 'object') || false,
             legendLabels = (legend && opts.legend.labels ? opts.legend.labels : []),
             legendXstart = (legend && opts.legend.x ? opts.legend.x : cx + R1 + 30),
@@ -81,6 +83,7 @@
             startX = cx,
             startY = cy,
             endAngle = 0,
+            defaultOutlineRingThickness = 10,
             startAngle = endAngle,
             timeout,
             currentBucket,
@@ -192,7 +195,7 @@
                             return [];
                         }
 
-                        var R2 = threeD ? R1 / 2 : R1,
+                        var R2 = (donut && !threeD) ? R1 * tiltDonut : (threeD ? R1 * tilt3d : R1),
                             innerR1 = (R1 * donutDiameter),
                             innerR2 = (R2 * donutDiameter),
                             x1start = calculateX(startX, innerR1, startAngle),
@@ -265,13 +268,13 @@
                             endAngle = 180;
                         }
 
-                        var R2 = threeD ? R1 / 2 : R1,
+                        var R2 = threeD ? R1 * tilt3d : R1,
                             x1start = calculateX(startX, R1, startAngle),
                             y1start = calculateY(startY, R2, startAngle),
-                            y1end = calculateY(startY + size3d, R2, startAngle),
+                            y1end = calculateY(startY + height3d, R2, startAngle),
                             x2start = calculateAngledX(startX, R1, startAngle, endAngle),
                             y2start = calculateAngledY(startY, R2, startAngle, endAngle),
-                            y2end = calculateAngledY(startY + size3d, R2, startAngle, endAngle),
+                            y2end = calculateAngledY(startY + height3d, R2, startAngle, endAngle),
                             largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
                             sweepFlagPositiveAngle = 1,
                             sweepFlagNegativeAngle = 0;
@@ -290,9 +293,10 @@
 
                     customAttribs.outline = function (startX, startY, R1, startAngle, endAngle) {
                         var innerR1 = R1 + (threeD ? 3 : 1),
-                            innerR2 = (threeD ? innerR1 / 2 : innerR1),
-                            outerR1 = innerR1 + (threeD ? 14 : 10),
-                            outerR2 = innerR2 + (threeD ? 6 : 10),
+                            innerR2 = (threeD ? innerR1 * tilt3d : innerR1),
+                            outlineThickness = (threeD ? (defaultOutlineRingThickness + defaultOutlineRingThickness * tilt3d > 14 ? 14 : defaultOutlineRingThickness + defaultOutlineRingThickness * tilt3d) : defaultOutlineRingThickness),
+                            outerR1 = innerR1 + (threeD ? outlineThickness : outlineThickness),
+                            outerR2 = innerR2 + (threeD ? (outlineThickness / 2 - 1) : outlineThickness),
                             x1start = calculateX(startX, innerR1, startAngle),
                             y1start = calculateY(startY, innerR2, startAngle),
                             x1end = calculateX(startX, outerR1, startAngle),
@@ -322,15 +326,15 @@
                             return [];
                         }
 
-                        var R2 = threeD ? R1 / 2 : R1,
+                        var R2 = threeD ? R1 * tilt3d : R1,
                             x = calculateX(startX, R1, angle),
                             y = calculateY(startY, R2, angle);
 
                         return {
                             path: [
                                 ["M", startX, startY ],
-                                ["L", startX, startY + size3d ],
-                                ["L", x, y + size3d ],
+                                ["L", startX, startY + height3d ],
+                                ["L", x, y + height3d ],
                                 ["L", x, y ],
                                 ["Z"]
                             ]
