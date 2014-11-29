@@ -44,6 +44,8 @@
             BACKOUT_EFFECT_NAME = "backOut",
             ELASTIC_EFFECT_NAME = "elastic",
             data = opts.data || [],
+            wholePie = (data && data.length === 1) || false,
+            slicedPie = !wholePie,
             gradient = (opts.gradient && typeof opts.gradient === 'object') || false,
             gradientDarkness = (gradient && opts.gradient.darkness ? opts.gradient.darkness : 0),
             gradientLightness = (gradient && opts.gradient.lightness ? opts.gradient.lightness : 0),
@@ -70,7 +72,7 @@
             easing = opts.easing || "",
             shiftDistance = (threeD ? 15 : 10),
             total = 0,
-            animationDelay = 600,
+            animationDelay = (slicedPie ? 600 : 1500),
             slices = paper.set(),
             markers = paper.set(),
             descriptions = paper.set(),
@@ -185,6 +187,8 @@
                     };
 
                 this.configure = function () {
+
+
                     customAttribs.slice = function (startX, startY, R1, startAngle, endAngle) {
                         if (startAngle === 0 && endAngle === 0) {
                             return [];
@@ -205,23 +209,43 @@
                             sweepFlag = 1; // positive angle
 
                         if (donut && !threeD) {
+                            if (slicedPie) {
+                                return {
+                                    path: [
+                                        ["M", x1start, y1start ],
+                                        ["L", x1end, y1end ],
+                                        ["A", R1, R2, 0, +largeArcFlag, sweepFlag, x2end, y2end ],
+                                        ["L", x2start, y2start ],
+                                        ["A", innerR1, innerR2, 0, +largeArcFlag, 0, x1start, y1start ],
+                                        ["Z"]
+                                    ]
+                                };
+                            }
+
                             return {
                                 path: [
-                                    ["M", x1start, y1start ],
-                                    ["L", x1end, y1end ],
-                                    ["A", R1, R2, 0, +largeArcFlag, 1, x2end, y2end ],
-                                    ["L", x2start, y2start ],
-                                    ["A", innerR1, innerR2, 0, +largeArcFlag, 0, x1start, y1start ],
-                                    ["Z"]
+                                    ["M", startX, startY - R2 ],
+                                    ["a", R1, R2, 0, 1, 0, 1, 0 ],
+                                    ["M", x1start - innerR1, y1start - innerR2 ],
+                                    ["a", innerR1, innerR2, 0, 1, 1, -1, 0 ]
                                 ]
                             };
                         }
 
+                        if (slicedPie) {
+                            return {
+                                path: [
+                                    ["M", startX, startY ],
+                                    ["L", x1end, y1end ],
+                                    ["A", R1, R2, 0, +largeArcFlag, sweepFlag, x2end, y2end ],
+                                    ["Z"]
+                                ]
+                            };
+                        }
                         return {
                             path: [
-                                ["M", startX, startY ],
-                                ["L", x1end, y1end ],
-                                ["A", R1, R2, 0, +largeArcFlag, sweepFlag, x2end, y2end ],
+                                ["M", startX, startY - R2],
+                                ["A", R1, R2, 0, +largeArcFlag, sweepFlag, startX - 0.01, startY - R2],
                                 ["Z"]
                             ]
                         };
@@ -362,6 +386,7 @@
                 "stroke": WHITE_COLOR,
                 "stroke-width": 1.5,
                 "stroke-linejoin": "round",
+                "fill-rule": "evenodd",
                 "fill": fill(bucket.color),
                 "title": bucket.title,
                 "cursor": cursor
@@ -562,42 +587,49 @@
         for (index = 0; index < data.length; index += 1) {
             currentBucket = bucket[index];
             if (threeD) {
-                bucket[index].wallOne = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.wallOneOriginZero : currentBucket.wallOneOrigin)));
-                bucket[index].wallTwo = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.wallTwoOriginZero : currentBucket.wallTwoOrigin)));
+                if (slicedPie) {
+                    bucket[index].wallOne = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.wallOneOriginZero : currentBucket.wallOneOrigin)));
+                    bucket[index].wallTwo = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.wallTwoOriginZero : currentBucket.wallTwoOrigin)));
+                }
                 bucket[index].arc = paper.path().attr(attr("arc", currentBucket, (evolution ? currentBucket.arcOriginZero : currentBucket.arcOrigin)));
             }
             bucket[index].slice = paper.path().attr(attr("slice", currentBucket, (evolution ? currentBucket.sliceOriginZero : currentBucket.sliceOrigin)));
             bucket[index].slice.handle = bucket[index].handle;
-            if (easing.indexOf("outline") !== -1) {
+            if (slicedPie && easing.indexOf("outline") !== -1) {
                 currentSliceOutline = paper.path().attr(attr("outline", currentBucket, bucket[index].sliceOrigin));
                 bucket[index].slice.outline = currentSliceOutline;
                 currentSliceOutline.hide();
             }
             slices.push(bucket[index].slice);
 
-            bindEffectHandlers(bucket[index]);
+            if (slicedPie) {
+                bindEffectHandlers(bucket[index]);
+            }
             renderChartLegend(bucket[index]);
         }
 
         if (threeD) {
             for (index = 0; index < data.length; index += 1) {
                 currentBucket = bucket[index];
-                if (currentBucket.startAngle >= 90 && currentBucket.startAngle < 270) {
-                    // the following order is important
-                    bucket[index].wallOne.toBack();
-                    bucket[index].wallTwo.toBack();
-                } else if (currentBucket.endAngle > 270 && currentBucket.endAngle <= 360) {
-                    bucket[index].wallOne.toBack();
-                } else if (currentBucket.endAngle > 0 && currentBucket.endAngle < 90) {
-                    bucket[index].wallTwo.toFront();
+
+                if (slicedPie) {
+                    if (currentBucket.startAngle >= 90 && currentBucket.startAngle < 270) {
+                        // the following order is important
+                        currentBucket.wallOne.toBack();
+                        currentBucket.wallTwo.toBack();
+                    } else if (currentBucket.endAngle > 270 && currentBucket.endAngle <= 360) {
+                        currentBucket.wallOne.toBack();
+                    } else if (currentBucket.endAngle > 0 && currentBucket.endAngle < 90) {
+                        currentBucket.wallTwo.toFront();
+                    }
                 }
 
                 if (currentBucket.startAngle >= 0 && currentBucket.startAngle < 180) {
-                    bucket[index].arc.toFront();
+                    currentBucket.arc.toFront();
                 } else {
-                    bucket[index].arc.toBack();
+                    currentBucket.arc.toBack();
                 }
-                bucket[index].slice.toFront();
+                currentBucket.slice.toFront();
             }
         }
 
@@ -608,6 +640,9 @@
 
                     if (threeD) {
                         bucket[index].arc.animate({arc: bucket[index].arcOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                    }
+
+                    if (threeD && slicedPie) {
                         bucket[index].wallOne.animate({wall: bucket[index].wallOneOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
                         bucket[index].wallTwo.animate({wall: bucket[index].wallTwoOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
                     }
