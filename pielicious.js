@@ -72,6 +72,7 @@
             marker = opts.marker || "circle",
             evolution = opts.evolution || false,
             easing = opts.easing || "",
+            orientation = opts.orientation || 0,
             shiftDistance = (threeD ? 15 : 10),
             total = 0,
             animationDelay = (slicedPie ? 600 : 1500),
@@ -83,8 +84,8 @@
             startX = cx,
             startY = cy,
             endAngle = 0,
-            defaultOutlineRingThickness = 10,
             startAngle = endAngle,
+            defaultOutlineRingThickness = 10,
             timeout,
             currentBucket,
             currentSliceOutline,
@@ -97,6 +98,8 @@
             currentSliceAngle,
             currentSliceShiftX,
             currentSliceShiftY,
+            realStartAngle,
+            realEndAngle,
             Animator = function Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn) {
                 if (!(this instanceof Animator)) {
                     return new Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn);
@@ -218,7 +221,7 @@
                                         ["A", R1, R2, 0, +largeArcFlag, sweepFlagPositiveAngle, x2end, y2end ],
                                         ["L", x2start, y2start ],
                                         ["A", innerR1, innerR2, 0, +largeArcFlag, (sweepFlagPositiveAngle - 1), x1start, y1start ],
-                                        ["Z"]
+                                        ["z"]
                                     ]
                                 };
                             }
@@ -241,7 +244,7 @@
                                     ["M", startX, startY ],
                                     ["L", x1end, y1end ],
                                     ["A", R1, R2, 0, +largeArcFlag, sweepFlagPositiveAngle, x2end, y2end ],
-                                    ["Z"]
+                                    ["z"]
                                 ]
                             };
                         }
@@ -251,7 +254,7 @@
                                 path: [
                                     ["M", startX, startY - R2],
                                     ["a", R1, R2, 0, +largeArcFlag, (sweepFlagPositiveAngle - 1), 1, 0],
-                                    ["Z"]
+                                    ["z"]
                                 ]
                             };
                         }
@@ -286,7 +289,7 @@
                                 ["A", R1, R2, 0, +largeArcFlag, sweepFlagPositiveAngle, x2start, y2end ],
                                 ["L", x2start, y2start ],
                                 ["A", R1, R2, 0, +largeArcFlag, sweepFlagNegativeAngle, x1start, y1start ],
-                                ["Z"]
+                                ["z"]
                             ]
                         };
                     };
@@ -294,8 +297,13 @@
                     customAttribs.outline = function (startX, startY, R1, startAngle, endAngle) {
                         var innerR1 = R1 + (threeD ? 3 : 1),
                             innerR2 = (threeD ? innerR1 * tilt3d : innerR1),
-                            outlineThickness = (threeD ? (defaultOutlineRingThickness + defaultOutlineRingThickness * tilt3d > 14 ? 14 : defaultOutlineRingThickness + defaultOutlineRingThickness * tilt3d) : defaultOutlineRingThickness),
-                            outerR1 = innerR1 + (threeD ? outlineThickness : outlineThickness),
+                            outlineThickness =
+                                (threeD
+                                    ? ((defaultOutlineRingThickness + defaultOutlineRingThickness * tilt3d) > 14
+                                    ? 14
+                                    : (defaultOutlineRingThickness + defaultOutlineRingThickness * tilt3d))
+                                    : defaultOutlineRingThickness),
+                            outerR1 = innerR1 + outlineThickness,
                             outerR2 = innerR2 + (threeD ? (outlineThickness / 2 - 1) : outlineThickness),
                             x1start = calculateX(startX, innerR1, startAngle),
                             y1start = calculateY(startY, innerR2, startAngle),
@@ -316,7 +324,7 @@
                                 ["A", outerR1, outerR2, 0, +largeArcFlag, sweepFlagPositiveAngle, x2end, y2end ],
                                 ["L", x2start, y2start ],
                                 ["A", innerR1, innerR2, 0, +largeArcFlag, sweepFlagNegativeAngle, x1start, y1start ],
-                                ["Z"]
+                                ["z"]
                             ]
                         };
                     };
@@ -336,12 +344,47 @@
                                 ["L", startX, startY + height3d ],
                                 ["L", x, y + height3d ],
                                 ["L", x, y ],
-                                ["Z"]
+                                ["z"]
                             ]
                         };
                     };
                 };
             };
+
+        function configure3DBorderZIndices() {
+            if (threeD) {
+                for (index = 0; index < data.length; index += 1) {
+                    currentBucket = bucket[index];
+                    if (slicedPie) {
+                        if (currentBucket.realStartAngle >= 90 && currentBucket.realStartAngle < 270) {
+                            // the following order is important
+                            currentBucket.wallOne.toBack();
+                            currentBucket.wallTwo.toBack();
+                        } else if (currentBucket.realEndAngle > 270 && currentBucket.realEndAngle <= 360) {
+                            currentBucket.wallOne.toBack();
+                        }
+
+                        if (currentBucket.realStartAngle >= 0 && currentBucket.realStartAngle < 90) {
+                            currentBucket.wallTwo.toFront();
+                        }
+
+                        if (currentBucket.realStartAngle > 90 && currentBucket.realStartAngle <= 180) {
+                            currentBucket.wallOne.toFront();
+                        }
+                    }
+                }
+
+                for (index = 0; index < data.length; index += 1) {
+                    currentBucket = bucket[index];
+                    if (currentBucket.realStartAngle >= 0 && currentBucket.realStartAngle < 180) {
+                        currentBucket.arc.toFront();
+                    } else {
+                        currentBucket.arc.toBack();
+                    }
+                    currentBucket.slice.toFront();
+                }
+            }
+        }
 
         Animator.prototype = {
             bind: function () {
@@ -364,6 +407,7 @@
                                 self.arc.toBack();
                             }
                         }
+                        configure3DBorderZIndices();
                     },
                     sliceMouseOutHandler = function () {
                         self.slice.animate(self.sliceAnimationIn);
@@ -556,19 +600,24 @@
         }
 
         for (index = 0; index < data.length; index += 1) {
-            bucket[index] = {};
             currentValue = data[index] || 0;
             currentColor = colors[index] || "#FF0000";
             currentLabel = legendLabels[index] || "";
             currentTitle = titles[index] || "";
             currentHref = hrefs[index] || "";
             currentHandle = handles[index] || "";
-            currentSliceAngle = 360 * currentValue / total;
             startAngle = endAngle;
+            if (!index) {
+                startAngle = orientation;
+            }
+            currentSliceAngle = 360 * currentValue / total;
             endAngle = startAngle + currentSliceAngle;
+            realStartAngle = (startAngle > 360 ? startAngle - 360 : startAngle);
+            realEndAngle = (endAngle > 360 ? endAngle - 360 : endAngle);
             currentSliceShiftX = startX + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * RADIAN);
             currentSliceShiftY = startY + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * RADIAN);
 
+            bucket[index] = {};
             bucket[index].color = currentColor;
             bucket[index].label = currentLabel;
             bucket[index].title = currentTitle;
@@ -576,6 +625,8 @@
             bucket[index].handle = currentHandle;
             bucket[index].startAngle = startAngle;
             bucket[index].endAngle = endAngle;
+            bucket[index].realStartAngle = realStartAngle; // used to determine z-indices of 3D borders
+            bucket[index].realEndAngle = realEndAngle;     // used to determine z-indices of 3D borders
             bucket[index].startX = startX;
             bucket[index].startY = startY;
             bucket[index].shiftX = currentSliceShiftX;
@@ -617,47 +668,31 @@
             renderChartLegend(bucket[index]);
         }
 
-        if (threeD) {
-            for (index = 0; index < data.length; index += 1) {
-                currentBucket = bucket[index];
-
-                if (slicedPie) {
-                    if (currentBucket.startAngle >= 90 && currentBucket.startAngle < 270) {
-                        // the following order is important
-                        currentBucket.wallOne.toBack();
-                        currentBucket.wallTwo.toBack();
-                    } else if (currentBucket.endAngle > 270 && currentBucket.endAngle <= 360) {
-                        currentBucket.wallOne.toBack();
-                    } else if (currentBucket.endAngle > 0 && currentBucket.endAngle < 90) {
-                        currentBucket.wallTwo.toFront();
-                    }
-                }
-
-                if (currentBucket.startAngle >= 0 && currentBucket.startAngle < 180) {
-                    currentBucket.arc.toFront();
-                } else {
-                    currentBucket.arc.toBack();
-                }
-                currentBucket.slice.toFront();
-            }
-        }
-
         if (evolution) {
             timeout = window.setTimeout(function () {
                 for (index = 0; index < bucket.length; index += 1) {
-                    bucket[index].slice.animate({slice: bucket[index].sliceOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+
 
                     if (threeD) {
                         bucket[index].arc.animate({arc: bucket[index].arcOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                        bucket[index].arc.toFront();
                     }
 
                     if (threeD && slicedPie) {
                         bucket[index].wallOne.animate({wall: bucket[index].wallOneOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
                         bucket[index].wallTwo.animate({wall: bucket[index].wallTwoOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
                     }
+
+                    bucket[index].slice.animate({slice: bucket[index].sliceOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                    bucket[index].arc.toFront();
+
                 }
+
                 window.clearTimeout(timeout);
+                configure3DBorderZIndices();
             }, 200);
+        } else {
+            configure3DBorderZIndices();
         }
 
         return {slices: slices.items, markers: markers.items, descriptions: descriptions.items};

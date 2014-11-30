@@ -51,13 +51,14 @@ var pie = paper.pielicious(150, 150, 100, {
 - `cursor` (string): cursor type displayed when mouse hovers the slice [default: `normal`]
 - `marker` (string): legend marker symbol. Options: `rect`, `circle` & `ellipse` [default: `circle`]
 - `evolution` (boolean): whether or not to animate rendering slice by slice [default: `false`]
+- `orientation` (integer): between 1 - 360. Pie starting angle [default: `0`]
 - `gradient` (object literal): use color gradient to fill each slice [default: no gradient]
     - `gradient.darkness` (integer): `color` darkness level between (incl.) 0-100 [default: `0`]
     - `gradient.lightness` (integer): `color` lightness level between (incl.) 0-100 [default: `0`]
     - `gradient.degrees` (integer): gradient direction angle [default: `180`]
 - `threeD` (object literal): generate 3D pie chart. Not available for donut [default: 2D chart]
     - `threeD.height` (integer): between 1 - 100. The height of 3D pie (Z dimension) [default: `25`]
-    - `threeD.tilt` (float): between 0.1 - 0.9. Determines the 3D pie angle tilt [default: `0.5`]
+    - `threeD.tilt` (float): between 0.1 - 0.9. Determines the 3D pie tilt angle [default: `0.5`]
 - `legend` (object literal): generate chart legend [default: no legend]
     - `legend.labels` (array): array of strings that will be used in a pie legend
     - `legend.x` (integer): x origin coordinate of the legend [default: `chart X + radius + 30`]
@@ -66,7 +67,7 @@ var pie = paper.pielicious(150, 150, 100, {
     - `legend.fontSize` (string): legend font size [default: `14`]
 - `donut` (object literal): turn pie into donut chart. Not available in 3D [default: pie chart]
     - `donut.diameter` (float): between 0.1 - 0.9. Determines the donut thickness [default: `0.5`]
-    - `donut.tilt` (float): between 0.1 - 0.9. Determines the donut angle tilt [default: `0.5`]
+    - `donut.tilt` (float): between 0.1 - 0.9. Determines the donut tilt angle [default: `0.5`]
 - `easing` (string): slice hover effect. Disabled in whole, no-slice pie/donut [default: no hover effect]
     - `shift-fast`: pie slice shifts away from the pie center [see Screenshots](#screenshots)
     - `shift-slow`: same as `shift-fast`, but slower
