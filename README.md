@@ -38,6 +38,7 @@ var pie = paper.pielicious(150, 150, 100, {
     donut: {diameter: 0.4, tilt: 0.6},
     legend: {labels: labels, x: 290, y: 90, fontSize: 14, fontFamily: "Verdana"},
     evolution: true,
+    orientation: 130,
     easing: "elastic"
 });
 ```
@@ -51,7 +52,7 @@ var pie = paper.pielicious(150, 150, 100, {
 - `cursor` (string): cursor type displayed when mouse hovers the slice [default: `normal`]
 - `marker` (string): legend marker symbol. Options: `rect`, `circle` & `ellipse` [default: `circle`]
 - `evolution` (boolean): whether or not to animate rendering slice by slice [default: `false`]
-- `orientation` (integer): between 1 - 360. Pie starting angle [default: `0`]
+- `orientation` (integer): between 1 - 360. Pie slices render starting from this angle [default: `0`]
 - `gradient` (object literal): use color gradient to fill each slice [default: no gradient]
     - `gradient.darkness` (integer): `color` darkness level between (incl.) 0-100 [default: `0`]
     - `gradient.lightness` (integer): `color` lightness level between (incl.) 0-100 [default: `0`]

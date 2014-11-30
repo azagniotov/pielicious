@@ -296,15 +296,15 @@
 
                     customAttribs.outline = function (startX, startY, R1, startAngle, endAngle) {
                         var innerR1 = R1 + (threeD ? 3 : 1),
-                            innerR2 = (threeD ? innerR1 * tilt3d : innerR1),
+                            innerR2 = (threeD ? innerR1 * tilt3d : (donut ? innerR1 * tiltDonut : innerR1)),
                             outlineThickness =
                                 (threeD
-                                    ? ((defaultOutlineRingThickness + defaultOutlineRingThickness * tilt3d) > 14
-                                    ? 14
+                                    ? ((defaultOutlineRingThickness + defaultOutlineRingThickness * tilt3d) > 12
+                                    ? 12
                                     : (defaultOutlineRingThickness + defaultOutlineRingThickness * tilt3d))
                                     : defaultOutlineRingThickness),
                             outerR1 = innerR1 + outlineThickness,
-                            outerR2 = innerR2 + (threeD ? (outlineThickness / 2 - 1) : outlineThickness),
+                            outerR2 = innerR2 + (threeD ? (outlineThickness / 2) : outlineThickness),
                             x1start = calculateX(startX, innerR1, startAngle),
                             y1start = calculateY(startY, innerR2, startAngle),
                             x1end = calculateX(startX, outerR1, startAngle),
@@ -671,21 +671,14 @@
         if (evolution) {
             timeout = window.setTimeout(function () {
                 for (index = 0; index < bucket.length; index += 1) {
-
-
                     if (threeD) {
                         bucket[index].arc.animate({arc: bucket[index].arcOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-                        bucket[index].arc.toFront();
+                        if (slicedPie) {
+                            bucket[index].wallOne.animate({wall: bucket[index].wallOneOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                            bucket[index].wallTwo.animate({wall: bucket[index].wallTwoOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                        }
                     }
-
-                    if (threeD && slicedPie) {
-                        bucket[index].wallOne.animate({wall: bucket[index].wallOneOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-                        bucket[index].wallTwo.animate({wall: bucket[index].wallTwoOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-                    }
-
                     bucket[index].slice.animate({slice: bucket[index].sliceOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-                    bucket[index].arc.toFront();
-
                 }
 
                 window.clearTimeout(timeout);
