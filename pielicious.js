@@ -294,7 +294,7 @@
 
                     customAttribs.outline = function (startX, startY, R1, startAngle, endAngle) {
                         var innerR1 = R1 + (threeD ? 3 : 1),
-                            innerR2 = (threeD ? innerR1 * tilt3d : (donut ? innerR1 * tiltDonut : innerR1)),
+                            innerR2 = (threeD ? innerR1 * tilt3d : (donut && tiltDonut ? innerR1 * tiltDonut : innerR1)),
                             outlineThickness =
                                 (threeD
                                     ? ((defaultOutlineRingThickness + defaultOutlineRingThickness * tilt3d) > 12
