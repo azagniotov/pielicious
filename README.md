@@ -68,7 +68,7 @@ var pie = paper.pielicious(150, 150, 100, {
     - `legend.fontSize` (string): legend font size [default: `14`]
 - `donut` (object literal): turn pie into donut chart. Not available in 3D [default: pie chart]
     - `donut.diameter` (float): between 0.1 - 0.9. Determines the donut thickness [default: `0.5`]
-    - `donut.tilt` (float): between 0.1 - 0.9. Determines the donut tilt angle [default: `0.5`]
+    - `donut.tilt` (float): between 0.1 - 0.9. Determines the donut tilt angle [default: no tilt]
 - `easing` (string): slice hover effect. Disabled in whole, no-slice pie/donut [default: no hover effect]
     - `shift-fast`: pie slice shifts away from the pie center [see Screenshots](#screenshots)
     - `shift-slow`: same as `shift-fast`, but slower

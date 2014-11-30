@@ -59,7 +59,7 @@
             tilt3d = (threeD && opts.threeD.tilt ? (Math.abs(opts.threeD.tilt) > 0.9 ? 0.9 : Math.abs(opts.threeD.tilt)) : 0.5),
             donut = (opts.donut && typeof opts.donut === 'object') || false,
             donutDiameter = (donut && opts.donut.diameter ? (Math.abs(opts.donut.diameter) > 0.9 ? 0.9 : Math.abs(opts.donut.diameter)) : 0.5),
-            tiltDonut = (donut && opts.donut.tilt ? (Math.abs(opts.donut.tilt) > 0.9 ? 0.9 : Math.abs(opts.donut.tilt)) : 0.5),
+            tiltDonut = (donut && opts.donut.tilt ? (Math.abs(opts.donut.tilt) > 0.9 ? 0.9 : Math.abs(opts.donut.tilt)) : false),
             legend = (opts.legend && typeof opts.legend === 'object') || false,
             legendLabels = (legend && opts.legend.labels ? opts.legend.labels : []),
             legendXstart = (legend && opts.legend.x ? opts.legend.x : cx + R1 + 30),
@@ -72,7 +72,8 @@
             marker = opts.marker || "circle",
             evolution = opts.evolution || false,
             easing = opts.easing || "",
-            orientation = opts.orientation || 0,
+            orientable = slicedPie ? (opts.orientation ? true : false) : false,
+            orientation = (orientable && Math.abs(opts.orientation) > 360 ? 360 : (orientable ? Math.abs(opts.orientation) : 0)),
             shiftDistance = (threeD ? 15 : 10),
             total = 0,
             animationDelay = (slicedPie ? 600 : 1500),
@@ -98,8 +99,6 @@
             currentSliceAngle,
             currentSliceShiftX,
             currentSliceShiftY,
-            realStartAngle,
-            realEndAngle,
             Animator = function Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn) {
                 if (!(this instanceof Animator)) {
                     return new Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn);
@@ -198,7 +197,7 @@
                             return [];
                         }
 
-                        var R2 = (donut && !threeD) ? R1 * tiltDonut : (threeD ? R1 * tilt3d : R1),
+                        var R2 = (donut && !threeD) ? (tiltDonut ? R1 * tiltDonut : R1) : (threeD ? R1 * tilt3d : R1),
                             innerR1 = (R1 * donutDiameter),
                             innerR2 = (R2 * donutDiameter),
                             x1start = calculateX(startX, innerR1, startAngle),
@@ -267,7 +266,6 @@
                         }
 
                         if (startAngle < 180 && endAngle > 180) {
-                            // do not draw arced border if it finishes beyinhg the 180 degree, ie.: do not draw not visible arc
                             endAngle = 180;
                         }
 
@@ -355,28 +353,35 @@
             if (threeD) {
                 for (index = 0; index < data.length; index += 1) {
                     currentBucket = bucket[index];
+
                     if (slicedPie) {
-                        if (currentBucket.realStartAngle >= 90 && currentBucket.realStartAngle < 270) {
+                        if ((currentBucket.startAngle >= 90 && currentBucket.startAngle < 270)
+                            || (currentBucket.startAngle >= 450 && currentBucket.startAngle < 630)) {
                             // the following order is important
                             currentBucket.wallOne.toBack();
                             currentBucket.wallTwo.toBack();
-                        } else if (currentBucket.realEndAngle > 270 && currentBucket.realEndAngle <= 360) {
+                        } else if ((currentBucket.endAngle > 270 && currentBucket.endAngle <= 360)
+                            || (currentBucket.endAngle > 630 && currentBucket.endAngle <= 720)) {
                             currentBucket.wallOne.toBack();
                         }
 
-                        if (currentBucket.realStartAngle >= 0 && currentBucket.realStartAngle < 90) {
+                        if ((currentBucket.endAngle > 0 && currentBucket.endAngle < 90)
+                            || (currentBucket.endAngle > 360 && currentBucket.endAngle < 450)) {
                             currentBucket.wallTwo.toFront();
                         }
 
-                        if (currentBucket.realStartAngle > 90 && currentBucket.realStartAngle <= 180) {
+                        if ((currentBucket.endAngle > 90 && currentBucket.endAngle < 180)
+                            || (currentBucket.endAngle > 450 && currentBucket.endAngle < 540)) {
                             currentBucket.wallOne.toFront();
                         }
                     }
+
                 }
 
                 for (index = 0; index < data.length; index += 1) {
                     currentBucket = bucket[index];
-                    if (currentBucket.realStartAngle >= 0 && currentBucket.realStartAngle < 180) {
+                    if ((currentBucket.startAngle >= 0 && currentBucket.startAngle < 180)
+                        || (currentBucket.startAngle >= 360 && currentBucket.startAngle < 540)) {
                         currentBucket.arc.toFront();
                     } else {
                         currentBucket.arc.toBack();
@@ -399,13 +404,6 @@
                             self.arc.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.arc);
                             self.wallOne.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.wallOne);
                             self.wallTwo.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.wallTwo);
-
-                            if (self.bucket.startAngle >= 0 && self.bucket.startAngle < 180) {
-                                self.arc.toFront();
-                                self.slice.toFront();
-                            } else {
-                                self.arc.toBack();
-                            }
                         }
                         configure3DBorderZIndices();
                     },
@@ -612,8 +610,6 @@
             }
             currentSliceAngle = 360 * currentValue / total;
             endAngle = startAngle + currentSliceAngle;
-            realStartAngle = (startAngle > 360 ? startAngle - 360 : startAngle);
-            realEndAngle = (endAngle > 360 ? endAngle - 360 : endAngle);
             currentSliceShiftX = startX + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * RADIAN);
             currentSliceShiftY = startY + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * RADIAN);
 
@@ -625,8 +621,6 @@
             bucket[index].handle = currentHandle;
             bucket[index].startAngle = startAngle;
             bucket[index].endAngle = endAngle;
-            bucket[index].realStartAngle = realStartAngle; // used to determine z-indices of 3D borders
-            bucket[index].realEndAngle = realEndAngle;     // used to determine z-indices of 3D borders
             bucket[index].startX = startX;
             bucket[index].startY = startY;
             bucket[index].shiftX = currentSliceShiftX;
