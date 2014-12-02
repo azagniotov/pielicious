@@ -84,8 +84,8 @@
             bucket = [],
             startX = cx,
             startY = cy,
-            endAngle = 0,
-            startAngle = endAngle,
+            terminalAngle = 0,
+            initialAngle = terminalAngle,
             defaultOutlineRingThickness = 10,
             timeout,
             currentBucket,
@@ -107,8 +107,8 @@
                 this.threeD = threeD;
                 this.slice = bucket.slice;
                 this.arc = bucket.arc;
-                this.wallOne = bucket.wallOne;
-                this.wallTwo = bucket.wallTwo;
+                this.initialSideBorder = bucket.initialSideBorder;
+                this.terminalSideBorder = bucket.terminalSideBorder;
                 this.sliceAnimationOut = sliceAnimationOut;
                 this.sliceAnimationIn = sliceAnimationIn;
                 this.bordersAnimationOut = bordersAnimationOut;
@@ -181,34 +181,34 @@
                     calculateX = function (startX, R, angle) {
                         return startX + R * Math.cos(angle * RADIAN);
                     },
-                    calculateAngledX = function (startX, R, startAngle, endAngle) {
-                        return startX + R * Math.cos((startAngle + (endAngle - startAngle)) * RADIAN);
+                    calculateAngledX = function (startX, R, initialAngle, terminalAngle) {
+                        return startX + R * Math.cos((initialAngle + (terminalAngle - initialAngle)) * RADIAN);
                     },
                     calculateY = function (startY, R, angle) {
                         return startY + R * Math.sin(angle * RADIAN);
                     },
-                    calculateAngledY = function (startY, R, startAngle, endAngle) {
-                        return startY + R * Math.sin((startAngle + (endAngle - startAngle)) * RADIAN);
+                    calculateAngledY = function (startY, R, initialAngle, terminalAngle) {
+                        return startY + R * Math.sin((initialAngle + (terminalAngle - initialAngle)) * RADIAN);
                     };
 
                 this.configure = function () {
-                    customAttribs.slice = function (startX, startY, R1, startAngle, endAngle) {
-                        if (startAngle === 0 && endAngle === 0) {
+                    customAttribs.slice = function (startX, startY, R1, initialAngle, terminalAngle) {
+                        if (initialAngle === 0 && terminalAngle === 0) {
                             return [];
                         }
 
                         var R2 = (donut && !threeD) ? (tiltDonut ? R1 * tiltDonut : R1) : (threeD ? R1 * tilt3d : R1),
                             innerR1 = (R1 * donutDiameter),
                             innerR2 = (R2 * donutDiameter),
-                            x1start = calculateX(startX, innerR1, startAngle),
-                            y1start = calculateY(startY, innerR2, startAngle),
-                            x1end = calculateX(startX, R1, startAngle),
-                            y1end = calculateY(startY, R2, startAngle),
-                            x2end = calculateX(startX, R1, endAngle),
-                            y2end = calculateY(startY, R2, endAngle),
-                            x2start = calculateAngledX(startX, innerR1, startAngle, endAngle),
-                            y2start = calculateAngledY(startY, innerR2, startAngle, endAngle),
-                            largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
+                            x1start = calculateX(startX, innerR1, initialAngle),
+                            y1start = calculateY(startY, innerR2, initialAngle),
+                            x1end = calculateX(startX, R1, initialAngle),
+                            y1end = calculateY(startY, R2, initialAngle),
+                            x2end = calculateX(startX, R1, terminalAngle),
+                            y2end = calculateY(startY, R2, terminalAngle),
+                            x2start = calculateAngledX(startX, innerR1, initialAngle, terminalAngle),
+                            y2start = calculateAngledY(startY, innerR2, initialAngle, terminalAngle),
+                            largeArcFlag = (Math.abs(terminalAngle - initialAngle) > 180),
                             sweepFlagPositiveAngle = 1; // positive angle
 
                         if (donut && !threeD) {
@@ -259,24 +259,24 @@
                         }
                     };
 
-                    customAttribs.arc = function (startX, startY, R1, startAngle, endAngle) {
+                    customAttribs.arc = function (startX, startY, R1, initialAngle, terminalAngle) {
 
-                        if (startAngle === 0 && endAngle === 0) {
+                        if (initialAngle === 0 && terminalAngle === 0) {
                             return [];
                         }
 
-                        if (startAngle < 180 && endAngle > 180) {
-                            endAngle = 180;
+                        if (initialAngle < 180 && terminalAngle > 180) {
+                            terminalAngle = 180;
                         }
 
                         var R2 = threeD ? R1 * tilt3d : R1,
-                            x1start = calculateX(startX, R1, startAngle),
-                            y1start = calculateY(startY, R2, startAngle),
-                            y1end = calculateY(startY + height3d, R2, startAngle),
-                            x2start = calculateAngledX(startX, R1, startAngle, endAngle),
-                            y2start = calculateAngledY(startY, R2, startAngle, endAngle),
-                            y2end = calculateAngledY(startY + height3d, R2, startAngle, endAngle),
-                            largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
+                            x1start = calculateX(startX, R1, initialAngle),
+                            y1start = calculateY(startY, R2, initialAngle),
+                            y1end = calculateY(startY + height3d, R2, initialAngle),
+                            x2start = calculateAngledX(startX, R1, initialAngle, terminalAngle),
+                            y2start = calculateAngledY(startY, R2, initialAngle, terminalAngle),
+                            y2end = calculateAngledY(startY + height3d, R2, initialAngle, terminalAngle),
+                            largeArcFlag = (Math.abs(terminalAngle - initialAngle) > 180),
                             sweepFlagPositiveAngle = 1,
                             sweepFlagNegativeAngle = 0;
 
@@ -292,7 +292,7 @@
                         };
                     };
 
-                    customAttribs.outline = function (startX, startY, R1, startAngle, endAngle) {
+                    customAttribs.outline = function (startX, startY, R1, initialAngle, terminalAngle) {
                         var innerR1 = R1 + (threeD ? 3 : 1),
                             innerR2 = (threeD ? innerR1 * tilt3d : (donut && tiltDonut ? innerR1 * tiltDonut : innerR1)),
                             outlineThickness =
@@ -303,15 +303,15 @@
                                     : defaultOutlineRingThickness),
                             outerR1 = innerR1 + outlineThickness,
                             outerR2 = innerR2 + (threeD ? (outlineThickness / 2) : outlineThickness),
-                            x1start = calculateX(startX, innerR1, startAngle),
-                            y1start = calculateY(startY, innerR2, startAngle),
-                            x1end = calculateX(startX, outerR1, startAngle),
-                            y1end = calculateY(startY, outerR2, startAngle),
-                            x2start = calculateAngledX(startX, innerR1, startAngle, endAngle),
-                            y2start = calculateAngledY(startY, innerR2, startAngle, endAngle),
-                            x2end = calculateAngledX(startX, outerR1, startAngle, endAngle),
-                            y2end = calculateAngledY(startY, outerR2, startAngle, endAngle),
-                            largeArcFlag = (Math.abs(endAngle - startAngle) > 180),
+                            x1start = calculateX(startX, innerR1, initialAngle),
+                            y1start = calculateY(startY, innerR2, initialAngle),
+                            x1end = calculateX(startX, outerR1, initialAngle),
+                            y1end = calculateY(startY, outerR2, initialAngle),
+                            x2start = calculateAngledX(startX, innerR1, initialAngle, terminalAngle),
+                            y2start = calculateAngledY(startY, innerR2, initialAngle, terminalAngle),
+                            x2end = calculateAngledX(startX, outerR1, initialAngle, terminalAngle),
+                            y2end = calculateAngledY(startY, outerR2, initialAngle, terminalAngle),
+                            largeArcFlag = (Math.abs(terminalAngle - initialAngle) > 180),
                             sweepFlagPositiveAngle = 1,
                             sweepFlagNegativeAngle = 0;
 
@@ -355,24 +355,24 @@
                     currentBucket = bucket[index];
 
                     if (slicedPie) {
-                        if ((currentBucket.startAngle >= 90 && currentBucket.startAngle < 270)
-                            || (currentBucket.startAngle >= 450 && currentBucket.startAngle < 630)) {
+                        if ((currentBucket.initialAngle >= 90 && currentBucket.initialAngle < 270)
+                            || (currentBucket.initialAngle >= 450 && currentBucket.initialAngle < 630)) {
                             // the following order is important
-                            currentBucket.wallOne.toBack();
-                            currentBucket.wallTwo.toBack();
-                        } else if ((currentBucket.endAngle > 270 && currentBucket.endAngle <= 360)
-                            || (currentBucket.endAngle > 630 && currentBucket.endAngle <= 720)) {
-                            currentBucket.wallOne.toBack();
+                            currentBucket.initialSideBorder.toBack();
+                            currentBucket.terminalSideBorder.toBack();
+                        } else if ((currentBucket.terminalAngle > 270 && currentBucket.terminalAngle <= 360)
+                            || (currentBucket.terminalAngle > 630 && currentBucket.terminalAngle <= 720)) {
+                            currentBucket.initialSideBorder.toBack();
                         }
 
-                        if ((currentBucket.endAngle > 0 && currentBucket.endAngle < 90)
-                            || (currentBucket.endAngle > 360 && currentBucket.endAngle < 450)) {
-                            currentBucket.wallTwo.toFront();
+                        if ((currentBucket.terminalAngle > 0 && currentBucket.terminalAngle < 90)
+                            || (currentBucket.terminalAngle > 360 && currentBucket.terminalAngle < 450)) {
+                            currentBucket.terminalSideBorder.toFront();
                         }
 
-                        if ((currentBucket.endAngle > 90 && currentBucket.endAngle < 180)
-                            || (currentBucket.endAngle > 450 && currentBucket.endAngle < 540)) {
-                            currentBucket.wallOne.toFront();
+                        if ((currentBucket.terminalAngle > 90 && currentBucket.terminalAngle < 180)
+                            || (currentBucket.terminalAngle > 450 && currentBucket.terminalAngle < 540)) {
+                            currentBucket.initialSideBorder.toFront();
                         }
                     }
 
@@ -380,8 +380,8 @@
 
                 for (index = 0; index < data.length; index += 1) {
                     currentBucket = bucket[index];
-                    if ((currentBucket.startAngle >= 0 && currentBucket.startAngle < 180)
-                        || (currentBucket.startAngle >= 360 && currentBucket.startAngle < 540)) {
+                    if ((currentBucket.initialAngle >= 0 && currentBucket.initialAngle < 180)
+                        || (currentBucket.initialAngle >= 360 && currentBucket.initialAngle < 540)) {
                         currentBucket.arc.toFront();
                     } else {
                         currentBucket.arc.toBack();
@@ -399,11 +399,11 @@
                         self.slice.animate(self.sliceAnimationOut);
                         if (self.threeD) {
                             self.arc.stop();
-                            self.wallOne.stop();
-                            self.wallTwo.stop();
+                            self.initialSideBorder.stop();
+                            self.terminalSideBorder.stop();
                             self.arc.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.arc);
-                            self.wallOne.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.wallOne);
-                            self.wallTwo.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.wallTwo);
+                            self.initialSideBorder.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.initialSideBorder);
+                            self.terminalSideBorder.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.terminalSideBorder);
                         }
                         configure3DBorderZIndices();
                     },
@@ -411,8 +411,8 @@
                         self.slice.animate(self.sliceAnimationIn);
                         if (self.threeD) {
                             self.arc.animateWith(self.slice, self.sliceAnimationIn, self.bordersAnimationIn.arc);
-                            self.wallOne.animateWith(self.slice, self.sliceAnimationIn, self.bordersAnimationIn.wallOne);
-                            self.wallTwo.animateWith(self.slice, self.sliceAnimationIn, self.bordersAnimationIn.wallTwo);
+                            self.initialSideBorder.animateWith(self.slice, self.sliceAnimationIn, self.bordersAnimationIn.initialSideBorder);
+                            self.terminalSideBorder.animateWith(self.slice, self.sliceAnimationIn, self.bordersAnimationIn.terminalSideBorder);
                         }
                     };
 
@@ -449,8 +449,8 @@
 
         function bindEffectHandlers(bucket) {
             var shortAnimationDelay = animationDelay / 4,
-                shiftOutCoordinates = [bucket.shiftX, bucket.shiftY, R1, bucket.startAngle, bucket.endAngle],
-                startCoordinates = [bucket.startX, bucket.startY, R1, bucket.startAngle, bucket.endAngle],
+                shiftOutCoordinates = [bucket.shiftX, bucket.shiftY, R1, bucket.initialAngle, bucket.terminalAngle],
+                startCoordinates = [bucket.startX, bucket.startY, R1, bucket.initialAngle, bucket.terminalAngle],
                 scaleOut = {transform: "s1.1 1.1 " + startX + " " + startY},
                 scaleNormal = {transform: "s1 1 " + startX + " " + startY},
                 transformOut = {transform: "T" + (bucket.shiftX - cx) + ", " + (bucket.shiftY - cy)},
@@ -462,13 +462,13 @@
                 new Animator(bucket, threeD, shiftOut, shiftIn,
                     {
                         arc: shiftOut,
-                        wallOne: shiftOut,
-                        wallTwo: shiftOut
+                        initialSideBorder: shiftOut,
+                        terminalSideBorder: shiftOut
                     },
                     {
                         arc: shiftIn,
-                        wallOne: shiftIn,
-                        wallTwo: shiftIn
+                        initialSideBorder: shiftIn,
+                        terminalSideBorder: shiftIn
                     }).bind();
 
             } else if (easing === ELASTIC_EFFECT_NAME) {
@@ -477,13 +477,13 @@
                 new Animator(bucket, threeD, shiftOut, shiftIn,
                     {
                         arc: shiftOut,
-                        wallOne: shiftOut,
-                        wallTwo: shiftOut
+                        initialSideBorder: shiftOut,
+                        terminalSideBorder: shiftOut
                     },
                     {
                         arc: shiftIn,
-                        wallOne: shiftIn,
-                        wallTwo: shiftIn
+                        initialSideBorder: shiftIn,
+                        terminalSideBorder: shiftIn
                     }).bind();
 
             } else if (easing === "shift-slow") {
@@ -492,13 +492,13 @@
                 new Animator(bucket, threeD, shiftOut, shiftIn,
                     {
                         arc: shiftOut,
-                        wallOne: shiftOut,
-                        wallTwo: shiftOut
+                        initialSideBorder: shiftOut,
+                        terminalSideBorder: shiftOut
                     },
                     {
                         arc: shiftIn,
-                        wallOne: shiftIn,
-                        wallTwo: shiftIn
+                        initialSideBorder: shiftIn,
+                        terminalSideBorder: shiftIn
                     }).bind();
 
             } else if (easing === "shift-bounce") {
@@ -507,13 +507,13 @@
                     Raphael.animation({slice: startCoordinates}, animationDelay, BOUNCE_EFFECT_NAME),
                     {
                         arc: Raphael.animation({arc: shiftOutCoordinates}, shortAnimationDelay),
-                        wallOne: Raphael.animation({wall: [bucket.shiftX, bucket.shiftY, R1, bucket.startAngle]}, shortAnimationDelay),
-                        wallTwo: Raphael.animation({wall: [bucket.shiftX, bucket.shiftY, R1, bucket.endAngle]}, shortAnimationDelay)
+                        initialSideBorder: Raphael.animation({wall: [bucket.shiftX, bucket.shiftY, R1, bucket.initialAngle]}, shortAnimationDelay),
+                        terminalSideBorder: Raphael.animation({wall: [bucket.shiftX, bucket.shiftY, R1, bucket.terminalAngle]}, shortAnimationDelay)
                     },
                     {
                         arc: Raphael.animation({arc: startCoordinates}, animationDelay, BOUNCE_EFFECT_NAME),
-                        wallOne: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.startAngle]}, animationDelay, BOUNCE_EFFECT_NAME),
-                        wallTwo: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.endAngle]}, animationDelay, BOUNCE_EFFECT_NAME)
+                        initialSideBorder: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.initialAngle]}, animationDelay, BOUNCE_EFFECT_NAME),
+                        terminalSideBorder: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.terminalAngle]}, animationDelay, BOUNCE_EFFECT_NAME)
                     }).bind();
             } else if (easing === "scale") {
                 new Animator(bucket, threeD,
@@ -521,13 +521,13 @@
                     scaleNormal,
                     {
                         arc: scaleOut,
-                        wallOne: scaleOut,
-                        wallTwo: scaleOut
+                        initialSideBorder: scaleOut,
+                        terminalSideBorder: scaleOut
                     },
                     {
                         arc: scaleNormal,
-                        wallOne: scaleNormal,
-                        wallTwo: scaleNormal
+                        initialSideBorder: scaleNormal,
+                        terminalSideBorder: scaleNormal
                     }).bind();
             } else if (easing === "scale-bounce") {
                 new Animator(bucket, threeD,
@@ -535,13 +535,13 @@
                     Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME),
                     {
                         arc: scaleOut,
-                        wallOne: scaleOut,
-                        wallTwo: scaleOut
+                        initialSideBorder: scaleOut,
+                        terminalSideBorder: scaleOut
                     },
                     {
                         arc: Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME),
-                        wallOne: Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME),
-                        wallTwo: Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME)
+                        initialSideBorder: Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME),
+                        terminalSideBorder: Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME)
                     }).bind();
             } else if (easing === "outline") {
                 bucket.slice.mouseover(function () {
@@ -604,14 +604,14 @@
             currentTitle = titles[index] || "";
             currentHref = hrefs[index] || "";
             currentHandle = handles[index] || "";
-            startAngle = endAngle;
+            initialAngle = terminalAngle;
             if (!index) {
-                startAngle = orientation;
+                initialAngle = orientation;
             }
             currentSliceAngle = 360 * currentValue / total;
-            endAngle = startAngle + currentSliceAngle;
-            currentSliceShiftX = startX + shiftDistance * Math.cos((startAngle + (endAngle - startAngle) / 2) * RADIAN);
-            currentSliceShiftY = startY + shiftDistance * Math.sin((startAngle + (endAngle - startAngle) / 2) * RADIAN);
+            terminalAngle = initialAngle + currentSliceAngle;
+            currentSliceShiftX = startX + shiftDistance * Math.cos((initialAngle + (terminalAngle - initialAngle) / 2) * RADIAN);
+            currentSliceShiftY = startY + shiftDistance * Math.sin((initialAngle + (terminalAngle - initialAngle) / 2) * RADIAN);
 
             bucket[index] = {};
             bucket[index].color = currentColor;
@@ -619,22 +619,22 @@
             bucket[index].title = currentTitle;
             bucket[index].href = currentHref;
             bucket[index].handle = currentHandle;
-            bucket[index].startAngle = startAngle;
-            bucket[index].endAngle = endAngle;
+            bucket[index].initialAngle = initialAngle;
+            bucket[index].terminalAngle = terminalAngle;
             bucket[index].startX = startX;
             bucket[index].startY = startY;
             bucket[index].shiftX = currentSliceShiftX;
             bucket[index].shiftY = currentSliceShiftY;
-            bucket[index].sliceOrigin = [startX, startY, R1, startAngle, endAngle];
+            bucket[index].sliceOrigin = [startX, startY, R1, initialAngle, terminalAngle];
             bucket[index].sliceOriginZero = [startX, startY, R1, 0, 0];
 
             if (threeD) {
                 bucket[index].arcOrigin = bucket[index].sliceOrigin;
-                bucket[index].wallOneOrigin = [startX, startY, R1, startAngle];
-                bucket[index].wallTwoOrigin = [startX, startY, R1, endAngle];
+                bucket[index].initialSideBorderOrigin = [startX, startY, R1, initialAngle];
+                bucket[index].terminalSideBorderOrigin = [startX, startY, R1, terminalAngle];
                 bucket[index].arcOriginZero = bucket[index].sliceOriginZero;
-                bucket[index].wallOneOriginZero = [startX, startY, R1, 0];
-                bucket[index].wallTwoOriginZero = [startX, startY, R1, 0];
+                bucket[index].initialSideBorderOriginZero = [startX, startY, R1, 0];
+                bucket[index].terminalSideBorderOriginZero = [startX, startY, R1, 0];
             }
         }
 
@@ -642,8 +642,8 @@
             currentBucket = bucket[index];
             if (threeD) {
                 if (slicedPie) {
-                    bucket[index].wallOne = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.wallOneOriginZero : currentBucket.wallOneOrigin)));
-                    bucket[index].wallTwo = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.wallTwoOriginZero : currentBucket.wallTwoOrigin)));
+                    bucket[index].initialSideBorder = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.initialSideBorderOriginZero : currentBucket.initialSideBorderOrigin)));
+                    bucket[index].terminalSideBorder = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.terminalSideBorderOriginZero : currentBucket.terminalSideBorderOrigin)));
                 }
                 bucket[index].arc = paper.path().attr(attr("arc", currentBucket, (evolution ? currentBucket.arcOriginZero : currentBucket.arcOrigin)));
             }
@@ -668,8 +668,8 @@
                     if (threeD) {
                         bucket[index].arc.animate({arc: bucket[index].arcOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
                         if (slicedPie) {
-                            bucket[index].wallOne.animate({wall: bucket[index].wallOneOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-                            bucket[index].wallTwo.animate({wall: bucket[index].wallTwoOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                            bucket[index].initialSideBorder.animate({wall: bucket[index].initialSideBorderOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                            bucket[index].terminalSideBorder.animate({wall: bucket[index].terminalSideBorderOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
                         }
                     }
                     bucket[index].slice.animate({slice: bucket[index].sliceOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
