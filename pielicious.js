@@ -81,6 +81,8 @@
             markers = paper.set(),
             descriptions = paper.set(),
             index,
+            previousIndex,
+            nextIndex,
             bucket = [],
             startX = cx,
             startY = cy,
@@ -99,6 +101,7 @@
             currentSliceAngle,
             currentSliceShiftX,
             currentSliceShiftY,
+            shuffler,
             Animator = function Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn) {
                 if (!(this instanceof Animator)) {
                     return new Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn);
@@ -265,9 +268,13 @@
                             return [];
                         }
 
-                        if (initialAngle < 180 && terminalAngle > 180) {
-                            terminalAngle = 180;
+                        if (shuffler.quadrant(initialAngle) < 3 && shuffler.quadrant(terminalAngle) > 2) {
+                            terminalAngle = terminalAngle > 540 ? 540 : 180;
                         }
+
+                        //if (shuffler.quadrant(initialAngle) > 2 && shuffler.quadrant(terminalAngle) >= 1) {
+                        //    initialAngle = (0 || 360) ???
+                        //}
 
                         var R2 = threeD ? R1 * tilt3d : R1,
                             x1start = calculateX(startX, R1, initialAngle),
@@ -347,49 +354,116 @@
                         };
                     };
                 };
+            },
+
+            Shuffler = function Shuffler(isThreeDMode) {
+                this.isThreeDMode = isThreeDMode;
+                if (!(this instanceof Shuffler)) {
+                    return new Shuffler(isThreeDMode);
+                }
             };
 
-        function configure3DBorderZIndices() {
-            if (threeD) {
-                for (index = 0; index < data.length; index += 1) {
-                    currentBucket = bucket[index];
-
-                    if (slicedPie) {
-                        if ((currentBucket.initialAngle >= 90 && currentBucket.initialAngle < 270)
-                            || (currentBucket.initialAngle >= 450 && currentBucket.initialAngle < 630)) {
-                            // the following order is important
-                            currentBucket.initialSideBorder.toBack();
-                            currentBucket.terminalSideBorder.toBack();
-                        } else if ((currentBucket.terminalAngle > 270 && currentBucket.terminalAngle <= 360)
-                            || (currentBucket.terminalAngle > 630 && currentBucket.terminalAngle <= 720)) {
-                            currentBucket.initialSideBorder.toBack();
-                        }
-
-                        if ((currentBucket.terminalAngle > 0 && currentBucket.terminalAngle < 90)
-                            || (currentBucket.terminalAngle > 360 && currentBucket.terminalAngle < 450)) {
-                            currentBucket.terminalSideBorder.toFront();
-                        }
-
-                        if ((currentBucket.terminalAngle > 90 && currentBucket.terminalAngle < 180)
-                            || (currentBucket.terminalAngle > 450 && currentBucket.terminalAngle < 540)) {
-                            currentBucket.initialSideBorder.toFront();
-                        }
-                    }
-
+        Shuffler.prototype = {
+            shuffleBorders: function (bucket) {
+                var self = this,
+                    quadrant;
+                if (!self.isThreeDMode) {
+                    return;
                 }
 
+                quadrant = this.quadrant(bucket.initialSibling.terminalAngle);
+                switch (quadrant) {
+                    case 1:
+                    case 4:
+                        bucket.initialSibling.terminalSideBorder.toFront();
+                        //console.log("Q#" + quadrant + " Initial " + bucket.initialSibling.handle + " terminal border => FRONT");
+                        break;
+                    case 2:
+                    case 3:
+                        bucket.initialSibling.terminalSideBorder.toBack();
+                        //console.log("Q#" + quadrant + " Initial " + bucket.initialSibling.handle + " terminal border => BACK");
+                        break;
+                }
+
+                quadrant = this.quadrant(bucket.terminalSibling.initialAngle);
+                switch (quadrant) {
+                    case 1:
+                    case 4:
+                        bucket.terminalSibling.initialSideBorder.toBack();
+                        //console.log("Q#" + quadrant + " Terminal " + bucket.terminalSibling.handle + " initial border => BACK");
+                        break;
+                    case 2:
+                    case 3:
+                        bucket.terminalSibling.initialSideBorder.toFront();
+                        //console.log("Q#" + quadrant + " Terminal " + bucket.terminalSibling.handle + " initial border => FRONT");
+                        break;
+                }
+
+                quadrant = this.quadrant(bucket.initialAngle);
+                switch (quadrant) {
+                    case 1:
+                    case 4:
+                        bucket.initialSideBorder.toBack();
+                        //console.log("Q#" + quadrant + " " + bucket.handle + " initial border => BACK");
+                        break;
+                    case 2:
+                    case 3:
+                        bucket.initialSideBorder.toFront();
+                        //console.log("Q#" + quadrant + " " + bucket.handle + " initial border => FRONT");
+                        break;
+                }
+
+                quadrant = this.quadrant(bucket.terminalAngle);
+                switch (quadrant) {
+                    case 1:
+                    case 4:
+                        bucket.terminalSideBorder.toFront();
+                        //console.log("Q#" + quadrant + " " + bucket.handle + " terminal border => FRONT");
+                        break;
+                    case 2:
+                    case 3:
+                        bucket.terminalSideBorder.toBack();
+                        //console.log("Q#" + quadrant + " " + bucket.handle + " terminal border => BACK");
+                        break;
+                }
+
+                this.cover();
+            },
+
+            cover: function () {
+                var self = this,
+                    quadrant;
+                if (!self.isThreeDMode) {
+                    return;
+                }
                 for (index = 0; index < data.length; index += 1) {
                     currentBucket = bucket[index];
-                    if ((currentBucket.initialAngle >= 0 && currentBucket.initialAngle < 180)
-                        || (currentBucket.initialAngle >= 360 && currentBucket.initialAngle < 540)) {
+                    quadrant = this.quadrant(currentBucket.initialAngle);
+                    if (quadrant === 1 || quadrant === 2) {
                         currentBucket.arc.toFront();
                     } else {
                         currentBucket.arc.toBack();
                     }
+                }
+                for (index = 0; index < data.length; index += 1) {
+                    currentBucket = bucket[index];
                     currentBucket.slice.toFront();
                 }
+            },
+
+            quadrant: function (angle) {
+                var quadrantNumber;
+                if (angle === 0 || angle === 360) {
+                    return 1;
+                }
+                quadrantNumber = Math.ceil(angle / 90) % 4;
+                if (quadrantNumber === 0) {
+                    return 4;
+                }
+                return quadrantNumber;
             }
-        }
+        };
+        shuffler = new Shuffler(threeD);
 
         Animator.prototype = {
             bind: function () {
@@ -405,7 +479,7 @@
                             self.initialSideBorder.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.initialSideBorder);
                             self.terminalSideBorder.animateWith(self.slice, self.sliceAnimationOut, self.bordersAnimationOut.terminalSideBorder);
                         }
-                        configure3DBorderZIndices();
+                        shuffler.shuffleBorders(self.bucket);
                     },
                     sliceMouseOutHandler = function () {
                         self.slice.animate(self.sliceAnimationIn);
@@ -414,6 +488,7 @@
                             self.initialSideBorder.animateWith(self.slice, self.sliceAnimationIn, self.bordersAnimationIn.initialSideBorder);
                             self.terminalSideBorder.animateWith(self.slice, self.sliceAnimationIn, self.bordersAnimationIn.terminalSideBorder);
                         }
+                        shuffler.cover();
                     };
 
                 this.slice.mouseover(sliceMouseOverHandler);
@@ -639,6 +714,14 @@
         }
 
         for (index = 0; index < data.length; index += 1) {
+            previousIndex = (index - 1 < 0 ? data.length - 1 : index - 1);
+            nextIndex = (index + 1 > data.length - 1 ? 0 : index + 1);
+            bucket[index].initialSibling = bucket[previousIndex];
+            bucket[index].terminalSibling = bucket[nextIndex];
+            //console.log(bucket[index].terminalSibling.handle + " <= " + bucket[index].handle + " => " + bucket[index].initialSibling.handle);
+        }
+
+        for (index = 0; index < data.length; index += 1) {
             currentBucket = bucket[index];
             if (threeD) {
                 if (slicedPie) {
@@ -676,10 +759,10 @@
                 }
 
                 window.clearTimeout(timeout);
-                configure3DBorderZIndices();
+                shuffler.cover();
             }, 200);
         } else {
-            configure3DBorderZIndices();
+            shuffler.cover();
         }
 
         return {slices: slices.items, markers: markers.items, descriptions: descriptions.items};
