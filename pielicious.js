@@ -268,13 +268,13 @@
                             return [];
                         }
 
-                        if (shuffler.quadrant(initialAngle) < 3 && shuffler.quadrant(terminalAngle) > 2) {
+                        if (shuffler.isResetArcTerminalAngle(initialAngle, terminalAngle)) {
                             terminalAngle = terminalAngle > 540 ? 540 : 180;
                         }
 
-                        //if (shuffler.quadrant(initialAngle) > 2 && shuffler.quadrant(terminalAngle) >= 1) {
-                        //    initialAngle = (0 || 360) ???
-                        //}
+                        if (shuffler.isResetArcInitialAngle(initialAngle, terminalAngle)) {
+                            initialAngle = terminalAngle > 360 ? 360 : initialAngle;
+                        }
 
                         var R2 = threeD ? R1 * tilt3d : R1,
                             x1start = calculateX(startX, R1, initialAngle),
@@ -439,7 +439,7 @@
                 for (index = 0; index < data.length; index += 1) {
                     currentBucket = bucket[index];
                     quadrant = this.quadrant(currentBucket.initialAngle);
-                    if (quadrant === 1 || quadrant === 2) {
+                    if (quadrant === 1 || quadrant === 2 || this.isResetArcInitialAngle(currentBucket.initialAngle, currentBucket.terminalAngle)) {
                         currentBucket.arc.toFront();
                     } else {
                         currentBucket.arc.toBack();
@@ -461,6 +461,16 @@
                     return 4;
                 }
                 return quadrantNumber;
+            },
+
+            isResetArcInitialAngle: function (initialAngle, terminalAngle) {
+                return (this.quadrant(initialAngle) > 2
+                    && this.quadrant(terminalAngle) >= 1
+                    && this.quadrant(terminalAngle) < 3);
+            },
+
+            isResetArcTerminalAngle: function (initialAngle, terminalAngle) {
+                return (this.quadrant(initialAngle) < 3 && this.quadrant(terminalAngle) > 2);
             }
         };
         shuffler = new Shuffler(threeD);
