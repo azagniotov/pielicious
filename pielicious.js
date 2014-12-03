@@ -119,14 +119,15 @@
             },
 
         // Adopted from https://bgrins.github.io/TinyColor/
-            PieColor = function PieColor(color, gradientAngle) {
+            PieColor = function PieColor() {
                 if (!(this instanceof PieColor)) {
-                    return new PieColor(color, gradientAngle);
+                    return new PieColor();
                 }
-                var angle = gradientAngle,
-                    rgb = Raphael.getRGB(color),
-                    toHsl = function () {
-                        var r = rgb.r / 255,
+                var goldenRatioConjugate = 0.618033988749895,
+                    hueStart = Math.random(),
+                    toHsl = function (color) {
+                        var rgb = Raphael.getRGB(color),
+                            r = rgb.r / 255,
                             g = rgb.g / 255,
                             b = rgb.b / 255,
                             max = Math.max(r, g, b),
@@ -152,28 +153,39 @@
                         return {h: h, s: s, l: l};
                     },
 
-                    lighten = function (amount) {
+                    lighten = function (color, amount) {
                         amount = (amount === 0 || amount < 0) ? 0 : (amount || 10);
-                        var hsl = toHsl();
+                        var hsl = toHsl(color);
                         hsl.l += amount / 100;
                         hsl.l = Math.min(1, Math.max(0, hsl.l));
 
                         return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l);
                     },
 
-                    darken = function (amount) {
+                    darken = function (color, amount) {
                         amount = (amount === 0 || amount < 0) ? 0 : (amount || 10);
-                        var hsl = toHsl();
+                        var hsl = toHsl(color);
                         hsl.l -= amount / 100;
                         hsl.l = Math.min(1, Math.max(0, hsl.l));
 
                         return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l);
                     };
 
-                this.gradient = function (darkAmount, lightAmount) {
-                    return angle + "-" + darken(darkAmount) + "-" + lighten(lightAmount);
+                this.gradient = function (angle, color, darkAmount, lightAmount) {
+                    return angle + "-" + darken(color, darkAmount) + "-" + lighten(color, lightAmount);
+                };
+
+                this.randomRgb = function (limit) {
+                    var randomColors = [],
+                        currentHue = hueStart;
+                    for (index = 0; index < limit; index += 1) {
+                        currentHue = (currentHue + goldenRatioConjugate) % 1;
+                        randomColors.push(Raphael.hsb2rgb(currentHue, 0.5, 0.95).hex);
+                    }
+                    return randomColors;
                 };
             },
+            pieColor = new PieColor(),
 
             RaphaelConfigurator = function RaphaelConfigurator(paper) {
                 if (!(this instanceof RaphaelConfigurator)) {
@@ -514,7 +526,7 @@
             if (!gradient) {
                 return color;
             }
-            return new PieColor(color, gradientDegrees).gradient(gradientDarkness, gradientLightness);
+            return pieColor.gradient(gradientDegrees, color, gradientDarkness, gradientLightness);
         }
 
         function attr(shape, bucket, data) {
@@ -681,10 +693,10 @@
         for (index = 0; index < data.length; index += 1) {
             total += data[index];
         }
-
+        colors = colors.length > 0 ? colors : pieColor.randomRgb(data.length);
         for (index = 0; index < data.length; index += 1) {
             currentValue = data[index] || 0;
-            currentColor = colors[index] || "#FF0000";
+            currentColor = colors[index];
             currentLabel = legendLabels[index] || "";
             currentTitle = titles[index] || "";
             currentHref = hrefs[index] || "";
