@@ -45,7 +45,8 @@ var pie = paper.pielicious(150, 150, 100, {
 ### Pie Options
 
 - `data` (array): values used to plot
-- `colors` (array): array of string colors used to fill each pie/donut slice [default: `red`]
+- `colors` (array): array of string colors used to fill each pie/donut slice.
+            If colors are not provided, random colors will be generated for each slice [default: random colors]
 - `titles` (array): array of tooltips that pop up when the mouse hovers a slice [default: empty array]
 - `handles` (array): array of strings assigned to Raphaël elements of the chart [default: empty array]
 - `hrefs` (array): string urls to set up clicks on pie slices [default: empty array]
