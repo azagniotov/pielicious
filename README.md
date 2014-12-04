@@ -2,7 +2,8 @@ Pielicious
 =========
 
 Based on Raphaël JS (cross-browser JavaScript library that draws scalable vector graphics) by Dmitry Baranovskiy (http://raphaeljs.com).
-The library can generate 2D & 3D SVG charts. Various configuration options available for a better user experience.
+The library can generate 2D & 3D pure SVG pie & donut charts. Chart legend also generated using SVG, without any HTML.
+Comprehensive configuration options available for a better user experience.
 
 How to Use
 ==========
@@ -46,7 +47,7 @@ var pie = paper.pielicious(150, 150, 100, {
 
 - `data` (array): values used to plot
 - `colors` (array): array of string colors used to fill each pie/donut slice.
-            If colors are not provided, random colors will be generated for each slice [default: random colors]
+            If not provided or empty, random colors will be generated for each slice [default: random]
 - `titles` (array): array of tooltips that pop up when the mouse hovers a slice [default: empty array]
 - `handles` (array): array of strings assigned to Raphaël elements of the chart [default: empty array]
 - `hrefs` (array): string urls to set up clicks on pie slices [default: empty array]
@@ -91,7 +92,10 @@ var pie = paper.pielicious(150, 150, 100, {
 ![Shift](screenshots/shift.png?raw=true) Shift
 ![Outline](screenshots/outline.png?raw=true) Outline
 ![Outline](screenshots/3d-outline.png?raw=true) Outline
-  
+
+### Roadmap
+ * Export functionality
+
 ### Compatibility
 Raphaël v2.1.2
 

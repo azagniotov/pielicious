@@ -123,9 +123,7 @@
                 if (!(this instanceof PieColor)) {
                     return new PieColor();
                 }
-                var goldenRatioConjugate = 0.618033988749895,
-                    hueStart = Math.random(),
-                    toHsl = function (color) {
+                var toHsl = function (color) {
                         var rgb = Raphael.getRGB(color),
                             r = rgb.r / 255,
                             g = rgb.g / 255,
@@ -159,7 +157,7 @@
                         hsl.l += amount / 100;
                         hsl.l = Math.min(1, Math.max(0, hsl.l));
 
-                        return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l);
+                        return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l).hex;
                     },
 
                     darken = function (color, amount) {
@@ -168,7 +166,7 @@
                         hsl.l -= amount / 100;
                         hsl.l = Math.min(1, Math.max(0, hsl.l));
 
-                        return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l);
+                        return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l).hex;
                     };
 
                 this.gradient = function (angle, color, darkAmount, lightAmount) {
@@ -176,11 +174,12 @@
                 };
 
                 this.randomRgb = function (limit) {
-                    var randomColors = [],
-                        currentHue = hueStart;
+                    var goldenRatioConjugate = 1.618033988749895,
+                        randomColors = [],
+                        hueStart= Math.random();
                     for (index = 0; index < limit; index += 1) {
-                        currentHue = (currentHue + goldenRatioConjugate) % 1;
-                        randomColors.push(Raphael.hsb2rgb(currentHue, 0.5, 0.95).hex);
+                        hueStart = (hueStart + goldenRatioConjugate) % 1;
+                        randomColors.push(Raphael.hsb2rgb(hueStart, 0.5, 0.95).hex);
                     }
                     return randomColors;
                 };
