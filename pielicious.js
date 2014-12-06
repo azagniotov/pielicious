@@ -64,6 +64,7 @@
             legendLabels = (legend && opts.legend.labels ? opts.legend.labels : []),
             legendXstart = (legend && opts.legend.x ? opts.legend.x : cx + R1 + 30),
             legendYstart = (legend && opts.legend.y ? opts.legend.y : cy - R1),
+            legendEvents = (legend && opts.legend.events ? true : false),
             legendLabelXstart = legendXstart + 38,
             legendLabelYstart = legendYstart,
             fontSize = (legend && opts.legend.fontSize ? opts.legend.fontSize : "14"),
@@ -71,7 +72,7 @@
             cursor = opts.cursor || "normal",
             marker = opts.marker || "circle",
             evolution = opts.evolution || false,
-            easing = opts.easing || "",
+            animation = opts.animation || "",
             orientable = slicedPie ? (opts.orientation ? true : false) : false,
             orientation = (orientable && Math.abs(opts.orientation) > 360 ? 360 : (orientable ? Math.abs(opts.orientation) : 0)),
             shiftDistance = (threeD ? 15 : 10),
@@ -554,7 +555,7 @@
                 shiftOut = Raphael.animation(transformOut, shortAnimationDelay),
                 shiftIn = Raphael.animation(transformNormal, shortAnimationDelay);
 
-            if (easing === "shift-fast") {
+            if (animation === "shift-fast") {
                 new Animator(bucket, threeD, shiftOut, shiftIn,
                     {
                         arc: shiftOut,
@@ -567,7 +568,7 @@
                         terminalSideBorder: shiftIn
                     }).bind();
 
-            } else if (easing === ELASTIC_EFFECT_NAME) {
+            } else if (animation === ELASTIC_EFFECT_NAME) {
                 shiftOut = Raphael.animation(transformOut, animationDelay, ELASTIC_EFFECT_NAME);
                 shiftIn = Raphael.animation(transformNormal, animationDelay, ELASTIC_EFFECT_NAME);
                 new Animator(bucket, threeD, shiftOut, shiftIn,
@@ -582,7 +583,7 @@
                         terminalSideBorder: shiftIn
                     }).bind();
 
-            } else if (easing === "shift-slow") {
+            } else if (animation === "shift-slow") {
                 shiftOut = Raphael.animation(transformOut, animationDelay);
                 shiftIn = Raphael.animation(transformNormal, animationDelay);
                 new Animator(bucket, threeD, shiftOut, shiftIn,
@@ -597,7 +598,7 @@
                         terminalSideBorder: shiftIn
                     }).bind();
 
-            } else if (easing === "shift-bounce") {
+            } else if (animation === "shift-bounce") {
                 new Animator(bucket, threeD,
                     Raphael.animation({slice: shiftOutCoordinates}, shortAnimationDelay),
                     Raphael.animation({slice: startCoordinates}, animationDelay, BOUNCE_EFFECT_NAME),
@@ -611,7 +612,7 @@
                         initialSideBorder: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.initialAngle]}, animationDelay, BOUNCE_EFFECT_NAME),
                         terminalSideBorder: Raphael.animation({wall: [bucket.startX, bucket.startY, R1, bucket.terminalAngle]}, animationDelay, BOUNCE_EFFECT_NAME)
                     }).bind();
-            } else if (easing === "scale") {
+            } else if (animation === "scale") {
                 new Animator(bucket, threeD,
                     scaleOut,
                     scaleNormal,
@@ -625,7 +626,7 @@
                         initialSideBorder: scaleNormal,
                         terminalSideBorder: scaleNormal
                     }).bind();
-            } else if (easing === "scale-bounce") {
+            } else if (animation === "scale-bounce") {
                 new Animator(bucket, threeD,
                     scaleOut,
                     Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME),
@@ -639,7 +640,7 @@
                         initialSideBorder: Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME),
                         terminalSideBorder: Raphael.animation(scaleNormal, animationDelay, BOUNCE_EFFECT_NAME)
                     }).bind();
-            } else if (easing === "outline") {
+            } else if (animation === "outline") {
                 bucket.slice.mouseover(function () {
                     bucket.slice.outline.show();
                     bucket.slice.outline.toFront();
@@ -648,8 +649,8 @@
                 bucket.slice.mouseout(function () {
                     bucket.slice.outline.hide();
                 });
-            } else if (easing && easing !== "") {
-                console.error("Unknown hover effect name: " + easing);
+            } else if (animation && animation !== "") {
+                console.error("Unknown hover effect name: " + animation);
             }
         }
 
@@ -743,7 +744,7 @@
             }
             bucket[index].slice = paper.path().attr(attr("slice", currentBucket, (evolution ? currentBucket.sliceOriginZero : currentBucket.sliceOrigin)));
             bucket[index].slice.handle = bucket[index].handle;
-            if (slicedPie && easing.indexOf("outline") !== -1) {
+            if (slicedPie && animation.indexOf("outline") !== -1) {
                 currentSliceOutline = paper.path().attr(attr("outline", currentBucket, bucket[index].sliceOrigin));
                 bucket[index].slice.outline = currentSliceOutline;
                 currentSliceOutline.hide();
@@ -764,15 +765,20 @@
             //console.log(bucket[index].terminalSibling.handle + " <= " + bucket[index].handle + " => " + bucket[index].initialSibling.handle);
         }
 
-        for (index = 0; index < slices.items.length; index += 1) {
-            var events = slices.items[index].events;
-            if (events[0] && events[0].name === "mouseover" && typeof events[0].f === "function") {
-                markers.items[index].mouseover(events[0].f);
-                descriptions.items[index].mouseover(events[0].f);
-            }
-            if (events[1] && events[1].name === "mouseout" && typeof events[1].f === "function") {
-                markers.items[index].mouseout(events[1].f);
-                descriptions.items[index].mouseout(events[1].f);
+        if (legendEvents) {
+            for (index = 0; index < slices.items.length; index += 1) {
+                var events = slices.items[index].events;
+                if (typeof events === "undefined") {
+                    break;
+                }
+                if (events[0] && events[0].name === "mouseover" && typeof events[0].f === "function") {
+                    markers.items[index].mouseover(events[0].f);
+                    descriptions.items[index].mouseover(events[0].f);
+                }
+                if (events[1] && events[1].name === "mouseout" && typeof events[1].f === "function") {
+                    markers.items[index].mouseout(events[1].f);
+                    descriptions.items[index].mouseout(events[1].f);
+                }
             }
         }
 
