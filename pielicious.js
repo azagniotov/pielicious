@@ -732,17 +732,7 @@
                 bucket[index].initialSideBorderOriginZero = [startX, startY, R1, 0];
                 bucket[index].terminalSideBorderOriginZero = [startX, startY, R1, 0];
             }
-        }
 
-        for (index = 0; index < data.length; index += 1) {
-            previousIndex = (index - 1 < 0 ? data.length - 1 : index - 1);
-            nextIndex = (index + 1 > data.length - 1 ? 0 : index + 1);
-            bucket[index].initialSibling = bucket[previousIndex];
-            bucket[index].terminalSibling = bucket[nextIndex];
-            //console.log(bucket[index].terminalSibling.handle + " <= " + bucket[index].handle + " => " + bucket[index].initialSibling.handle);
-        }
-
-        for (index = 0; index < data.length; index += 1) {
             currentBucket = bucket[index];
             if (threeD) {
                 if (slicedPie) {
@@ -764,6 +754,26 @@
                 bindEffectHandlers(bucket[index]);
             }
             renderChartLegend(bucket[index]);
+        }
+
+        for (index = 0; index < data.length; index += 1) {
+            previousIndex = (index - 1 < 0 ? data.length - 1 : index - 1);
+            nextIndex = (index + 1 > data.length - 1 ? 0 : index + 1);
+            bucket[index].initialSibling = bucket[previousIndex];
+            bucket[index].terminalSibling = bucket[nextIndex];
+            //console.log(bucket[index].terminalSibling.handle + " <= " + bucket[index].handle + " => " + bucket[index].initialSibling.handle);
+        }
+
+        for (index = 0; index < slices.items.length; index += 1) {
+            var events = slices.items[index].events;
+            if (events[0] && events[0].name === "mouseover" && typeof events[0].f === "function") {
+                markers.items[index].mouseover(events[0].f);
+                descriptions.items[index].mouseover(events[0].f);
+            }
+            if (events[1] && events[1].name === "mouseout" && typeof events[1].f === "function") {
+                markers.items[index].mouseout(events[1].f);
+                descriptions.items[index].mouseout(events[1].f);
+            }
         }
 
         if (evolution) {
@@ -793,3 +803,4 @@
         return new Pielicious(this, cx, cy, R, opts);
     };
 }());
+
