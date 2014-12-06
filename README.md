@@ -37,10 +37,10 @@ var pie = paper.pielicious(150, 150, 100, {
     marker: "rect",
     threeD: {height: 10, tilt: 0.8},
     donut: {diameter: 0.4, tilt: 0.6},
-    legend: {labels: labels, x: 290, y: 90, fontSize: 14, fontFamily: "Verdana"},
+    legend: {labels: labels, x: 290, y: 90, fontSize: 14, fontFamily: "Verdana", events: true},
     evolution: true,
     orientation: 130,
-    easing: "elastic"
+    animation: "elastic"
 });
 ```
 ### Pie Options
@@ -48,7 +48,7 @@ var pie = paper.pielicious(150, 150, 100, {
 - `data` (array): values used to plot
 - `colors` (array): array of string colors used to fill each pie/donut slice
     - If not provided or empty, random colors will be generated for each slice
-- `titles` (array): array of tooltips that pop up when the mouse hovers a slice [default: empty array]
+- `titles` (array): array of tooltips for each slice when mouse hovers [default: empty array]
 - `handles` (array): array of strings assigned to Raphaël elements of the chart [default: empty array]
 - `hrefs` (array): string urls to set up clicks on pie slices [default: empty array]
 - `cursor` (string): cursor type displayed when mouse hovers the slice [default: `normal`]
@@ -68,12 +68,12 @@ var pie = paper.pielicious(150, 150, 100, {
     - `legend.y` (integer): y origin coordinate of the legend [default: `chart Y - radius`]
     - `legend.fontFamily` (string): legend font type [default: `Arial`]
     - `legend.fontSize` (string): legend font size [default: `14`]
-    - `legend.events` (boolean): hovering on marker or text triggers slice hover effect [default: `false`]
+    - `legend.events` (boolean): marker or text hover triggers slice hover effect [default: `false`]
         - `animation` must be set if `legend.events` is set to `true`
 - `donut` (object literal): turn pie into donut chart. Not available in 3D [default: pie chart]
     - `donut.diameter` (float): between 0.1 - 0.9. Determines the donut thickness [default: `0.5`]
     - `donut.tilt` (float): between 0.1 - 0.9. Determines the donut tilt angle [default: no tilt]
-- `animation` (string): slice hover effect. Disabled in whole, no-slice pie/donut [default: no hover effect]
+- `animation` (string): slice hover effect. Disabled in whole, no-slice pie/donut [default: none]
     - `shift-fast`: pie slice shifts away from the pie center [see Screenshots](#screenshots)
     - `shift-slow`: same as `shift-fast`, but slower
     - `shift-bounce`: same as `shift-fast`. When mouse exits, the slice bounces back
