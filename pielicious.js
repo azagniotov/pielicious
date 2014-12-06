@@ -36,31 +36,40 @@
 (function () {
     "use strict";
 
+    var RADIAN = (Math.PI / 180),
+        WHITE_COLOR = "#ffffff",
+        BOUNCE_EFFECT_NAME = "bounce",
+        BACKOUT_EFFECT_NAME = "backOut",
+        ELASTIC_EFFECT_NAME = "elastic",
+        cos = Math.cos,
+        sin = Math.sin,
+        min = Math.min,
+        max = Math.max,
+        random = Math.random,
+        ceil = Math.ceil,
+        abs = Math.abs,
+        is = Raphael.is;
+
     function Pielicious(paper, cx, cy, R1, opts) {
         opts = opts || {};
-        var RADIAN = (Math.PI / 180),
-            WHITE_COLOR = "#ffffff",
-            BOUNCE_EFFECT_NAME = "bounce",
-            BACKOUT_EFFECT_NAME = "backOut",
-            ELASTIC_EFFECT_NAME = "elastic",
-            data = opts.data || [],
+        var data = opts.data || [],
             wholePie = (data && data.length === 1) || false,
             slicedPie = !wholePie,
-            gradient = (opts.gradient && typeof opts.gradient === 'object') || false,
+            gradient = (opts.gradient && is(opts.gradient, "object")) || false,
             gradientDarkness = (gradient && opts.gradient.darkness ? opts.gradient.darkness : 0),
             gradientLightness = (gradient && opts.gradient.lightness ? opts.gradient.lightness : 0),
-            gradientDegrees = (gradient && opts.gradient.degrees ? Math.abs(opts.gradient.degrees) : 180),
+            gradientDegrees = (gradient && opts.gradient.degrees ? abs(opts.gradient.degrees) : 180),
             colors = opts.colors || [],
             titles = opts.titles || [],
             handles = opts.handles || [],
             hrefs = opts.hrefs || [],
-            threeD = (opts.threeD && typeof opts.threeD === 'object') || false,
-            height3d = (threeD && opts.threeD.height ? (Math.abs(opts.threeD.height) > 100 ? 100 : Math.abs(opts.threeD.height)) : 25),
-            tilt3d = (threeD && opts.threeD.tilt ? (Math.abs(opts.threeD.tilt) > 0.9 ? 0.9 : Math.abs(opts.threeD.tilt)) : 0.5),
-            donut = (opts.donut && typeof opts.donut === 'object') || false,
-            donutDiameter = (donut && opts.donut.diameter ? (Math.abs(opts.donut.diameter) > 0.9 ? 0.9 : Math.abs(opts.donut.diameter)) : 0.5),
-            tiltDonut = (donut && opts.donut.tilt ? (Math.abs(opts.donut.tilt) > 0.9 ? 0.9 : Math.abs(opts.donut.tilt)) : false),
-            legend = (opts.legend && typeof opts.legend === 'object') || false,
+            threeD = (opts.threeD && is(opts.threeD, "object")) || false,
+            height3d = (threeD && opts.threeD.height ? (abs(opts.threeD.height) > 100 ? 100 : abs(opts.threeD.height)) : 25),
+            tilt3d = (threeD && opts.threeD.tilt ? (abs(opts.threeD.tilt) > 0.9 ? 0.9 : abs(opts.threeD.tilt)) : 0.5),
+            donut = (opts.donut && is(opts.donut, "object")) || false,
+            donutDiameter = (donut && opts.donut.diameter ? (abs(opts.donut.diameter) > 0.9 ? 0.9 : abs(opts.donut.diameter)) : 0.5),
+            tiltDonut = (donut && opts.donut.tilt ? (abs(opts.donut.tilt) > 0.9 ? 0.9 : abs(opts.donut.tilt)) : false),
+            legend = (opts.legend && is(opts.legend, "object")) || false,
             legendLabels = (legend && opts.legend.labels ? opts.legend.labels : []),
             legendXstart = (legend && opts.legend.x ? opts.legend.x : cx + R1 + 30),
             legendYstart = (legend && opts.legend.y ? opts.legend.y : cy - R1),
@@ -74,7 +83,7 @@
             evolution = opts.evolution || false,
             animation = opts.animation || "",
             orientable = slicedPie ? (opts.orientation ? true : false) : false,
-            orientation = (orientable && Math.abs(opts.orientation) > 360 ? 360 : (orientable ? Math.abs(opts.orientation) : 0)),
+            orientation = (orientable && abs(opts.orientation) > 360 ? 360 : (orientable ? abs(opts.orientation) : 0)),
             shiftDistance = (threeD ? 15 : 10),
             total = 0,
             animationDelay = (slicedPie ? 600 : 1500),
@@ -129,22 +138,22 @@
                             r = rgb.r / 255,
                             g = rgb.g / 255,
                             b = rgb.b / 255,
-                            max = Math.max(r, g, b),
-                            min = Math.min(r, g, b),
+                            maxValue = max(r, g, b),
+                            minValue = min(r, g, b),
                             h,
                             s,
-                            l = (max + min) / 2,
-                            d = max - min;
+                            l = (maxValue + minValue) / 2,
+                            d = maxValue - minValue;
 
-                        if (max === min) {
+                        if (maxValue === minValue) {
                             h = s = 0; // achromatic
                         } else {
-                            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                            if (max === r) {
+                            s = l > 0.5 ? d / (2 - maxValue - minValue) : d / (maxValue + minValue);
+                            if (maxValue === r) {
                                 h = (g - b) / d + (g < b ? 6 : 0);
-                            } else if (max === g) {
+                            } else if (maxValue === g) {
                                 h = (b - r) / d + 2;
-                            } else if (max === b) {
+                            } else if (maxValue === b) {
                                 h = (r - g) / d + 4;
                             }
                             h /= 6;
@@ -156,7 +165,7 @@
                         amount = (amount === 0 || amount < 0) ? 0 : (amount || 10);
                         var hsl = toHsl(color);
                         hsl.l += amount / 100;
-                        hsl.l = Math.min(1, Math.max(0, hsl.l));
+                        hsl.l = min(1, max(0, hsl.l));
 
                         return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l).hex;
                     },
@@ -165,7 +174,7 @@
                         amount = (amount === 0 || amount < 0) ? 0 : (amount || 10);
                         var hsl = toHsl(color);
                         hsl.l -= amount / 100;
-                        hsl.l = Math.min(1, Math.max(0, hsl.l));
+                        hsl.l = min(1, max(0, hsl.l));
 
                         return Raphael.hsl2rgb(hsl.h, hsl.s, hsl.l).hex;
                     };
@@ -177,7 +186,7 @@
                 this.randomRgb = function (limit) {
                     var goldenRatioConjugate = 1.618033988749895,
                         randomColors = [],
-                        hueStart= Math.random();
+                        hueStart = random();
                     for (index = 0; index < limit; index += 1) {
                         hueStart = (hueStart + goldenRatioConjugate) % 1;
                         randomColors.push(Raphael.hsb2rgb(hueStart, 0.5, 0.95).hex);
@@ -194,16 +203,16 @@
                 var raphael = paper,
                     customAttribs = raphael.customAttributes || {},
                     calculateX = function (startX, R, angle) {
-                        return startX + R * Math.cos(angle * RADIAN);
+                        return startX + R * cos(angle * RADIAN);
                     },
                     calculateAngledX = function (startX, R, initialAngle, terminalAngle) {
-                        return startX + R * Math.cos((initialAngle + (terminalAngle - initialAngle)) * RADIAN);
+                        return startX + R * cos((initialAngle + (terminalAngle - initialAngle)) * RADIAN);
                     },
                     calculateY = function (startY, R, angle) {
-                        return startY + R * Math.sin(angle * RADIAN);
+                        return startY + R * sin(angle * RADIAN);
                     },
                     calculateAngledY = function (startY, R, initialAngle, terminalAngle) {
-                        return startY + R * Math.sin((initialAngle + (terminalAngle - initialAngle)) * RADIAN);
+                        return startY + R * sin((initialAngle + (terminalAngle - initialAngle)) * RADIAN);
                     };
 
                 this.configure = function () {
@@ -223,7 +232,7 @@
                             y2end = calculateY(startY, R2, terminalAngle),
                             x2start = calculateAngledX(startX, innerR1, initialAngle, terminalAngle),
                             y2start = calculateAngledY(startY, innerR2, initialAngle, terminalAngle),
-                            largeArcFlag = (Math.abs(terminalAngle - initialAngle) > 180),
+                            largeArcFlag = (abs(terminalAngle - initialAngle) > 180),
                             sweepFlagPositiveAngle = 1; // positive angle
 
                         if (donut && !threeD) {
@@ -295,7 +304,7 @@
                             x2start = calculateAngledX(startX, R1, initialAngle, terminalAngle),
                             y2start = calculateAngledY(startY, R2, initialAngle, terminalAngle),
                             y2end = calculateAngledY(startY + height3d, R2, initialAngle, terminalAngle),
-                            largeArcFlag = (Math.abs(terminalAngle - initialAngle) > 180),
+                            largeArcFlag = (abs(terminalAngle - initialAngle) > 180),
                             sweepFlagPositiveAngle = 1,
                             sweepFlagNegativeAngle = 0;
 
@@ -330,7 +339,7 @@
                             y2start = calculateAngledY(startY, innerR2, initialAngle, terminalAngle),
                             x2end = calculateAngledX(startX, outerR1, initialAngle, terminalAngle),
                             y2end = calculateAngledY(startY, outerR2, initialAngle, terminalAngle),
-                            largeArcFlag = (Math.abs(terminalAngle - initialAngle) > 180),
+                            largeArcFlag = (abs(terminalAngle - initialAngle) > 180),
                             sweepFlagPositiveAngle = 1,
                             sweepFlagNegativeAngle = 0;
 
@@ -377,77 +386,50 @@
 
         Shuffler.prototype = {
             shuffleBorders: function (bucket) {
-                var self = this,
-                    quadrant;
-                if (!self.isThreeDMode) {
+                if (!this.isThreeDMode) {
                     return;
                 }
-
-                quadrant = this.quadrant(bucket.initialSibling.terminalAngle);
-                switch (quadrant) {
-                    case 1:
-                    case 4:
-                        bucket.initialSibling.terminalSideBorder.toFront();
-                        //console.log("Q#" + quadrant + " Initial " + bucket.initialSibling.handle + " terminal border => FRONT");
-                        break;
-                    case 2:
-                    case 3:
-                        bucket.initialSibling.terminalSideBorder.toBack();
-                        //console.log("Q#" + quadrant + " Initial " + bucket.initialSibling.handle + " terminal border => BACK");
-                        break;
-                }
-
-                quadrant = this.quadrant(bucket.terminalSibling.initialAngle);
-                switch (quadrant) {
-                    case 1:
-                    case 4:
-                        bucket.terminalSibling.initialSideBorder.toBack();
-                        //console.log("Q#" + quadrant + " Terminal " + bucket.terminalSibling.handle + " initial border => BACK");
-                        break;
-                    case 2:
-                    case 3:
-                        bucket.terminalSibling.initialSideBorder.toFront();
-                        //console.log("Q#" + quadrant + " Terminal " + bucket.terminalSibling.handle + " initial border => FRONT");
-                        break;
-                }
-
-                quadrant = this.quadrant(bucket.initialAngle);
-                switch (quadrant) {
-                    case 1:
-                    case 4:
-                        bucket.initialSideBorder.toBack();
-                        //console.log("Q#" + quadrant + " " + bucket.handle + " initial border => BACK");
-                        break;
-                    case 2:
-                    case 3:
-                        bucket.initialSideBorder.toFront();
-                        //console.log("Q#" + quadrant + " " + bucket.handle + " initial border => FRONT");
-                        break;
-                }
-
-                quadrant = this.quadrant(bucket.terminalAngle);
-                switch (quadrant) {
-                    case 1:
-                    case 4:
-                        bucket.terminalSideBorder.toFront();
-                        //console.log("Q#" + quadrant + " " + bucket.handle + " terminal border => FRONT");
-                        break;
-                    case 2:
-                    case 3:
-                        bucket.terminalSideBorder.toBack();
-                        //console.log("Q#" + quadrant + " " + bucket.handle + " terminal border => BACK");
-                        break;
-                }
-
+                this.setZ(bucket.initialSibling.terminalAngle, function () {
+                    bucket.initialSibling.terminalSideBorder.toFront();
+                }, function () {
+                    bucket.initialSibling.terminalSideBorder.toBack();
+                });
+                this.setZ(bucket.terminalSibling.initialAngle, function () {
+                    bucket.terminalSibling.initialSideBorder.toBack();
+                }, function () {
+                    bucket.terminalSibling.initialSideBorder.toFront();
+                });
+                this.setZ(bucket.initialAngle, function () {
+                    bucket.initialSideBorder.toBack();
+                }, function () {
+                    bucket.initialSideBorder.toFront();
+                });
+                this.setZ(bucket.terminalAngle, function () {
+                    bucket.terminalSideBorder.toFront();
+                }, function () {
+                    bucket.terminalSideBorder.toBack();
+                });
                 this.cover();
             },
 
+            setZ: function (angle, zIndexRightSideFunc, zIndexLeftSideFunc) {
+                var quadrant = this.quadrant(angle);
+                if (quadrant === 1 || quadrant === 4) {
+                    if (is(zIndexRightSideFunc, "function")) {
+                        zIndexRightSideFunc();
+                    }
+                } else if (quadrant === 2 || quadrant === 3) {
+                    if (is(zIndexLeftSideFunc, "function")) {
+                        zIndexLeftSideFunc();
+                    }
+                }
+            },
+
             cover: function () {
-                var self = this,
-                    quadrant;
-                if (!self.isThreeDMode) {
+                if (!this.isThreeDMode) {
                     return;
                 }
+                var quadrant;
                 for (index = 0; index < data.length; index += 1) {
                     currentBucket = bucket[index];
                     quadrant = this.quadrant(currentBucket.initialAngle);
@@ -468,7 +450,7 @@
                 if (angle === 0 || angle === 360) {
                     return 1;
                 }
-                quadrantNumber = Math.ceil(angle / 90) % 4;
+                quadrantNumber = ceil(angle / 90) % 4;
                 if (quadrantNumber === 0) {
                     return 4;
                 }
@@ -707,8 +689,8 @@
             }
             currentSliceAngle = 360 * currentValue / total;
             terminalAngle = initialAngle + currentSliceAngle;
-            currentSliceShiftX = startX + shiftDistance * Math.cos((initialAngle + (terminalAngle - initialAngle) / 2) * RADIAN);
-            currentSliceShiftY = startY + shiftDistance * Math.sin((initialAngle + (terminalAngle - initialAngle) / 2) * RADIAN);
+            currentSliceShiftX = startX + shiftDistance * cos((initialAngle + (terminalAngle - initialAngle) / 2) * RADIAN);
+            currentSliceShiftY = startY + shiftDistance * sin((initialAngle + (terminalAngle - initialAngle) / 2) * RADIAN);
 
             bucket[index] = {};
             bucket[index].color = currentColor;
@@ -765,17 +747,18 @@
             //console.log(bucket[index].terminalSibling.handle + " <= " + bucket[index].handle + " => " + bucket[index].initialSibling.handle);
         }
 
-        if (legendEvents) {
+        if (legendEvents && animation) {
+            var events;
             for (index = 0; index < slices.items.length; index += 1) {
-                var events = slices.items[index].events;
-                if (typeof events === "undefined") {
+                events = slices.items[index].events;
+                if (is(events, "undefined")) {
                     break;
                 }
-                if (events[0] && events[0].name === "mouseover" && typeof events[0].f === "function") {
+                if (events[0] && events[0].name === "mouseover" && is(events[0].f, "function")) {
                     markers.items[index].mouseover(events[0].f);
                     descriptions.items[index].mouseover(events[0].f);
                 }
-                if (events[1] && events[1].name === "mouseout" && typeof events[1].f === "function") {
+                if (events[1] && events[1].name === "mouseout" && is(events[1].f, "function")) {
                     markers.items[index].mouseout(events[1].f);
                     descriptions.items[index].mouseout(events[1].f);
                 }

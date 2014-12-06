@@ -48,21 +48,21 @@ var pie = paper.pielicious(150, 150, 100, {
 - `data` (array): values used to plot
 - `colors` (array): array of string colors used to fill each pie/donut slice
     - If not provided or empty, random colors will be generated for each slice
-- `titles` (array): array of tooltips for each slice when mouse hovers [default: empty array]
-- `handles` (array): array of strings assigned to Raphaël elements of the chart [default: empty array]
-- `hrefs` (array): string urls to set up clicks on pie slices [default: empty array]
+- `titles` (array): array of tooltips for each slice when mouse hovers [default: `[]`]
+- `handles` (array): array of strings assigned to Raphaël elements of the chart [default: `[]`]
+- `hrefs` (array): string urls to set up clicks on pie slices [default: `[]`]
 - `cursor` (string): cursor type displayed when mouse hovers the slice [default: `normal`]
 - `marker` (string): legend marker symbol. Options: `rect`, `circle` & `ellipse` [default: `circle`]
 - `evolution` (boolean): whether or not to animate rendering slice by slice [default: `false`]
 - `orientation` (integer): between 1 - 360. Pie slices render starting from this angle [default: `0`]
-- `gradient` (object literal): use color gradient to fill each slice [default: no gradient]
+- `gradient` (object literal): use color gradient to fill each slice [default: none]
     - `gradient.darkness` (integer): `color` darkness level between (incl.) 0-100 [default: `0`]
     - `gradient.lightness` (integer): `color` lightness level between (incl.) 0-100 [default: `0`]
     - `gradient.degrees` (integer): gradient direction angle [default: `180`]
 - `threeD` (object literal): generate 3D pie chart. Not available for donut [default: 2D chart]
     - `threeD.height` (integer): between 1 - 100. The height of 3D pie (Z dimension) [default: `25`]
     - `threeD.tilt` (float): between 0.1 - 0.9. Determines the 3D pie tilt angle [default: `0.5`]
-- `legend` (object literal): generate chart legend [default: no legend]
+- `legend` (object literal): generate chart legend [default: none]
     - `legend.labels` (array): array of strings that will be used in a pie legend
     - `legend.x` (integer): x origin coordinate of the legend [default: `chart X + radius + 30`]
     - `legend.y` (integer): y origin coordinate of the legend [default: `chart Y - radius`]
