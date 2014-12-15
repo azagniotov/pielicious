@@ -91,8 +91,6 @@
             markers = paper.set(),
             descriptions = paper.set(),
             index,
-            previousIndex,
-            nextIndex,
             bucket = [],
             startX = cx,
             startY = cy,
@@ -100,18 +98,8 @@
             initialAngle = terminalAngle,
             defaultOutlineRingThickness = 10,
             timeout,
-            currentBucket,
-            currentSliceOutline,
-            currentValue,
-            currentColor,
-            currentLabel,
-            currentTitle,
-            currentHref,
-            currentHandle,
-            currentSliceAngle,
-            currentSliceShiftX,
-            currentSliceShiftY,
             shuffler,
+            currentBucket,
             Animator = function Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn) {
                 if (!(this instanceof Animator)) {
                     return new Animator(bucket, threeD, sliceAnimationOut, sliceAnimationIn, bordersAnimationOut, bordersAnimationIn);
@@ -670,120 +658,147 @@
             legendLabelYstart = legendYstart;
         }
 
-        new RaphaelConfigurator(paper).configure();
-
-        for (index = 0; index < data.length; index += 1) {
-            total += data[index];
-        }
-        colors = colors.length > 0 ? colors : pieColor.randomRgb(data.length);
-        for (index = 0; index < data.length; index += 1) {
-            currentValue = data[index] || 0;
-            currentColor = colors[index];
-            currentLabel = legendLabels[index] || "";
-            currentTitle = titles[index] || "";
-            currentHref = hrefs[index] || "";
-            currentHandle = handles[index] || "";
-            initialAngle = terminalAngle;
-            if (!index) {
-                initialAngle = orientation;
-            }
-            currentSliceAngle = 360 * currentValue / total;
-            terminalAngle = initialAngle + currentSliceAngle;
-            currentSliceShiftX = startX + shiftDistance * cos((initialAngle + (terminalAngle - initialAngle) / 2) * RADIAN);
-            currentSliceShiftY = startY + shiftDistance * sin((initialAngle + (terminalAngle - initialAngle) / 2) * RADIAN);
-
-            bucket[index] = {};
-            bucket[index].color = currentColor;
-            bucket[index].label = currentLabel;
-            bucket[index].title = currentTitle;
-            bucket[index].href = currentHref;
-            bucket[index].handle = currentHandle;
-            bucket[index].initialAngle = initialAngle;
-            bucket[index].terminalAngle = terminalAngle;
-            bucket[index].startX = startX;
-            bucket[index].startY = startY;
-            bucket[index].shiftX = currentSliceShiftX;
-            bucket[index].shiftY = currentSliceShiftY;
-            bucket[index].sliceOrigin = [startX, startY, R1, initialAngle, terminalAngle];
-            bucket[index].sliceOriginZero = [startX, startY, R1, 0, 0];
-
-            if (threeD) {
-                bucket[index].arcOrigin = bucket[index].sliceOrigin;
-                bucket[index].initialSideBorderOrigin = [startX, startY, R1, initialAngle];
-                bucket[index].terminalSideBorderOrigin = [startX, startY, R1, terminalAngle];
-                bucket[index].arcOriginZero = bucket[index].sliceOriginZero;
-                bucket[index].initialSideBorderOriginZero = [startX, startY, R1, 0];
-                bucket[index].terminalSideBorderOriginZero = [startX, startY, R1, 0];
-            }
-
-            currentBucket = bucket[index];
-            if (threeD) {
-                if (slicedPie) {
-                    bucket[index].initialSideBorder = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.initialSideBorderOriginZero : currentBucket.initialSideBorderOrigin)));
-                    bucket[index].terminalSideBorder = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.terminalSideBorderOriginZero : currentBucket.terminalSideBorderOrigin)));
-                }
-                bucket[index].arc = paper.path().attr(attr("arc", currentBucket, (evolution ? currentBucket.arcOriginZero : currentBucket.arcOrigin)));
-            }
-            bucket[index].slice = paper.path().attr(attr("slice", currentBucket, (evolution ? currentBucket.sliceOriginZero : currentBucket.sliceOrigin)));
-            bucket[index].slice.handle = bucket[index].handle;
-            if (slicedPie && animation.indexOf("outline") !== -1) {
-                currentSliceOutline = paper.path().attr(attr("outline", currentBucket, bucket[index].sliceOrigin));
-                bucket[index].slice.outline = currentSliceOutline;
-                currentSliceOutline.hide();
-            }
-            slices.push(bucket[index].slice);
-
-            if (slicedPie) {
-                bindEffectHandlers(bucket[index]);
-            }
-            renderChartLegend(bucket[index]);
-        }
-
-        for (index = 0; index < data.length; index += 1) {
-            previousIndex = (index - 1 < 0 ? data.length - 1 : index - 1);
-            nextIndex = (index + 1 > data.length - 1 ? 0 : index + 1);
-            bucket[index].initialSibling = bucket[previousIndex];
-            bucket[index].terminalSibling = bucket[nextIndex];
-            //console.log(bucket[index].terminalSibling.handle + " <= " + bucket[index].handle + " => " + bucket[index].initialSibling.handle);
-        }
-
-        if (legendEvents && animation) {
-            var events;
-            for (index = 0; index < slices.items.length; index += 1) {
-                events = slices.items[index].events;
-                if (is(events, "undefined")) {
-                    break;
-                }
-                if (events[0] && events[0].name === "mouseover" && is(events[0].f, "function")) {
-                    markers.items[index].mouseover(events[0].f);
-                    descriptions.items[index].mouseover(events[0].f);
-                }
-                if (events[1] && events[1].name === "mouseout" && is(events[1].f, "function")) {
-                    markers.items[index].mouseout(events[1].f);
-                    descriptions.items[index].mouseout(events[1].f);
-                }
+        function calculateTotal() {
+            for (index = 0; index < data.length; index += 1) {
+                total += data[index];
             }
         }
 
-        if (evolution) {
-            timeout = window.setTimeout(function () {
-                for (index = 0; index < bucket.length; index += 1) {
-                    if (threeD) {
-                        bucket[index].arc.animate({arc: bucket[index].arcOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-                        if (slicedPie) {
-                            bucket[index].initialSideBorder.animate({wall: bucket[index].initialSideBorderOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-                            bucket[index].terminalSideBorder.animate({wall: bucket[index].terminalSideBorderOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
-                        }
+        function fillDataBuckets() {
+            var currentSliceOutline,
+                currentValue,
+                currentColor,
+                currentLabel,
+                currentTitle,
+                currentHref,
+                currentHandle,
+                currentSliceAngle,
+                currentSliceShiftX,
+                currentSliceShiftY;
+            colors = colors.length > 0 ? colors : pieColor.randomRgb(data.length);
+            for (index = 0; index < data.length; index += 1) {
+                currentValue = data[index] || 0;
+                currentColor = colors[index];
+                currentLabel = legendLabels[index] || "";
+                currentTitle = titles[index] || "";
+                currentHref = hrefs[index] || "";
+                currentHandle = handles[index] || "";
+                initialAngle = terminalAngle;
+                if (!index) {
+                    initialAngle = orientation;
+                }
+                currentSliceAngle = 360 * currentValue / total;
+                terminalAngle = initialAngle + currentSliceAngle;
+                currentSliceShiftX = startX + shiftDistance * cos((initialAngle + (terminalAngle - initialAngle) / 2) * RADIAN);
+                currentSliceShiftY = startY + shiftDistance * sin((initialAngle + (terminalAngle - initialAngle) / 2) * RADIAN);
+
+                bucket[index] = {};
+                bucket[index].color = currentColor;
+                bucket[index].label = currentLabel;
+                bucket[index].title = currentTitle;
+                bucket[index].href = currentHref;
+                bucket[index].handle = currentHandle;
+                bucket[index].initialAngle = initialAngle;
+                bucket[index].terminalAngle = terminalAngle;
+                bucket[index].startX = startX;
+                bucket[index].startY = startY;
+                bucket[index].shiftX = currentSliceShiftX;
+                bucket[index].shiftY = currentSliceShiftY;
+                bucket[index].sliceOrigin = [startX, startY, R1, initialAngle, terminalAngle];
+                bucket[index].sliceOriginZero = [startX, startY, R1, 0, 0];
+
+                if (threeD) {
+                    bucket[index].arcOrigin = bucket[index].sliceOrigin;
+                    bucket[index].initialSideBorderOrigin = [startX, startY, R1, initialAngle];
+                    bucket[index].terminalSideBorderOrigin = [startX, startY, R1, terminalAngle];
+                    bucket[index].arcOriginZero = bucket[index].sliceOriginZero;
+                    bucket[index].initialSideBorderOriginZero = [startX, startY, R1, 0];
+                    bucket[index].terminalSideBorderOriginZero = [startX, startY, R1, 0];
+                }
+
+                currentBucket = bucket[index];
+                if (threeD) {
+                    if (slicedPie) {
+                        bucket[index].initialSideBorder = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.initialSideBorderOriginZero : currentBucket.initialSideBorderOrigin)));
+                        bucket[index].terminalSideBorder = paper.path().attr(attr("wall", currentBucket, (evolution ? currentBucket.terminalSideBorderOriginZero : currentBucket.terminalSideBorderOrigin)));
                     }
-                    bucket[index].slice.animate({slice: bucket[index].sliceOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                    bucket[index].arc = paper.path().attr(attr("arc", currentBucket, (evolution ? currentBucket.arcOriginZero : currentBucket.arcOrigin)));
                 }
+                bucket[index].slice = paper.path().attr(attr("slice", currentBucket, (evolution ? currentBucket.sliceOriginZero : currentBucket.sliceOrigin)));
+                bucket[index].slice.handle = bucket[index].handle;
+                if (slicedPie && animation.indexOf("outline") !== -1) {
+                    currentSliceOutline = paper.path().attr(attr("outline", currentBucket, bucket[index].sliceOrigin));
+                    bucket[index].slice.outline = currentSliceOutline;
+                    currentSliceOutline.hide();
+                }
+                slices.push(bucket[index].slice);
 
-                window.clearTimeout(timeout);
-                shuffler.cover();
-            }, 200);
-        } else {
-            shuffler.cover();
+                if (slicedPie) {
+                    bindEffectHandlers(bucket[index]);
+                }
+                renderChartLegend(bucket[index]);
+            }
         }
+
+        function setSiblings() {
+            var previousIndex, nextIndex;
+            for (index = 0; index < data.length; index += 1) {
+                previousIndex = (index - 1 < 0 ? data.length - 1 : index - 1);
+                nextIndex = (index + 1 > data.length - 1 ? 0 : index + 1);
+                bucket[index].initialSibling = bucket[previousIndex];
+                bucket[index].terminalSibling = bucket[nextIndex];
+                //console.log(bucket[index].terminalSibling.handle + " <= " + bucket[index].handle + " => " + bucket[index].initialSibling.handle);
+            }
+        }
+
+        function setLegendEvents() {
+            if (legendEvents && animation) {
+                var events;
+                for (index = 0; index < slices.items.length; index += 1) {
+                    events = slices.items[index].events;
+                    if (is(events, "undefined")) {
+                        break;
+                    }
+                    if (events[0] && events[0].name === "mouseover" && is(events[0].f, "function")) {
+                        markers.items[index].mouseover(events[0].f);
+                        descriptions.items[index].mouseover(events[0].f);
+                    }
+                    if (events[1] && events[1].name === "mouseout" && is(events[1].f, "function")) {
+                        markers.items[index].mouseout(events[1].f);
+                        descriptions.items[index].mouseout(events[1].f);
+                    }
+                }
+            }
+        }
+
+        function startEvolution() {
+            if (evolution) {
+                timeout = window.setTimeout(function () {
+                    for (index = 0; index < bucket.length; index += 1) {
+                        if (threeD) {
+                            bucket[index].arc.animate({arc: bucket[index].arcOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                            if (slicedPie) {
+                                bucket[index].initialSideBorder.animate({wall: bucket[index].initialSideBorderOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                                bucket[index].terminalSideBorder.animate({wall: bucket[index].terminalSideBorderOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                            }
+                        }
+                        bucket[index].slice.animate({slice: bucket[index].sliceOrigin}, animationDelay, BACKOUT_EFFECT_NAME);
+                    }
+
+                    window.clearTimeout(timeout);
+                    shuffler.cover();
+                }, 200);
+            } else {
+                shuffler.cover();
+            }
+        }
+
+        new RaphaelConfigurator(paper).configure();
+        calculateTotal();
+        fillDataBuckets();
+        setSiblings();
+        setLegendEvents();
+        startEvolution();
 
         return {slices: slices.items, markers: markers.items, descriptions: descriptions.items};
     }
