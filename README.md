@@ -1,7 +1,7 @@
 Pielicious
 =========
 
-Based on Raphaël JS (cross-browser JavaScript library that draws scalable vector graphics) by Dmitry Baranovskiy (http://raphaeljs.com).
+Based on Raphaël JS (cross-browser JavaScript library that draws scalable vector graphics) by Dmitry Baranovskiy (https://dmitrybaranovskiy.github.io/raphael/).
 The library can generate 2D & 3D pure SVG pie & donut charts. Chart legend also generated using SVG, without any HTML.
 Comprehensive configuration options available for a better user experience.
 
